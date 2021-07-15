@@ -2,6 +2,7 @@
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
+# Why do we need a struct? So that we can manage the memory as we want
 # With a 'ctypedef' this struct should be referred as 'ur_node_t' instead of 'struct ur_node_t'
 ctypedef struct ur_node_t
 
