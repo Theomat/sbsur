@@ -1,6 +1,6 @@
 # distutils: language=c++
 from libcpp.vector cimport vector
-
+from random_wrapper cimport mt19937
 from unique_randomizer cimport ur_node_t
 
 
@@ -13,7 +13,9 @@ cdef class SequenceGenerator:
     cdef void* pyfun_get_log_probs
     cdef ur_node_t* root
     cdef int max_categories
+    cdef mt19937 generator
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix)
     cdef ur_node_t* get_state(self)
     cdef int get_max_categories(self)
+    cdef mt19937 get_generator(self)
