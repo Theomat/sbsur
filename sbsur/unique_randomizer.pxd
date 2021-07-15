@@ -27,6 +27,7 @@ cdef size_t ur_get_categories(ur_node_t *node)
 # Return true => this node can be freed
 cdef bool ur_is_exhausted(ur_node_t* node)
 cdef bool ur_is_leaf(ur_node_t* node)
+cdef bool ur_has_parent(ur_node_t* node)
 # Copy the current state of the log probs into out
 cdef ur_get_log_probs(ur_node_t * node, double* out)
 
