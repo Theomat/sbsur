@@ -12,6 +12,8 @@ cdef class SequenceGenerator:
     #   get_log_probs: list[int] -> Optional[Union[list[float], np.ndarray[float]]] is  the Python signature
     cdef void* pyfun_get_log_probs
     cdef ur_node_t* root
+    cdef int max_categories
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix)
     cdef ur_node_t* get_state(self)
+    cdef int get_max_categories(self)

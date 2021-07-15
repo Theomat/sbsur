@@ -8,9 +8,10 @@ from unique_randomizer cimport ur_node_t, ur_free_all, ur_new
 
 cdef class SequenceGenerator:
 
-    def __cinit__(self, python_callback):
+    def __cinit__(self, python_callback, max_categories):
         self.pyfun_get_log_probs = <void*>python_callback
         self.root = ur_new()
+        self.max_categories = max_categories
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix):
         try:
@@ -34,6 +35,7 @@ cdef class SequenceGenerator:
             return NULL
     cdef ur_node_t* get_state(self):
         return self.root
-
+    cdef int get_max_categories(self):
+        return self.max_categories
     def __dealloc__(self):
         ur_free_all(self.root)
