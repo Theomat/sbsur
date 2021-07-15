@@ -24,7 +24,7 @@ cdef bool ur_is_exhausted(ur_node_t* node)
 cdef ur_get_log_probs(ur_node_t * node, double* out)
 
 # Update probabilities after seeing sequence
-cdef mark_sequence_sampled(ur_node_t* node, vector<int> sequence)
+cdef mark_sequence_sampled(ur_node_t* node, vector[int] sequence)
 
 
 # Additional getters that might be useful

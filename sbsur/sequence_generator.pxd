@@ -5,5 +5,5 @@ from unique_randomizer cimport ur_node_t
 
 
 cpdef class SequenceGenerator:
-    cdef double* get_log_probs(vector<int> sequence_prefix)
+    cdef double* get_log_probs(vector[int] sequence_prefix)
     cdef ur_node_t* get_state()
