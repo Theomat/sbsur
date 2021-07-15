@@ -31,8 +31,8 @@ cdef bool ur_has_parent(ur_node_t* node)
 # Copy the current state of the log probs into out
 cdef ur_get_log_probs(ur_node_t * node, double* out)
 
-# Update probabilities after seeing sequence
-cdef mark_sequence_sampled(ur_node_t* node, vector[int] sequence)
+# Update probabilities after seeing sequence stopped at the resulting leaf node
+cdef ur_mark_sampled(ur_node_t* leaf)
 
 
 # Additional getters that might be useful
