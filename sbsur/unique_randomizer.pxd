@@ -26,6 +26,8 @@ cdef ur_node_t *ur_get_parent(ur_node_t* node)
 cdef size_t ur_get_categories(ur_node_t *node)
 # Return true => this node can be freed
 cdef bool ur_is_exhausted(ur_node_t* node)
+# Return an array in which: array[i] == true iff the category 'i' can be sampled (this has no link to if there is an actual childe node, we are only interested in the fact that it can be sampled) 
+cdef ur_get_possibles(ur_node_t* node, bool* out)
 cdef bool ur_is_leaf(ur_node_t* node)
 cdef bool ur_has_parent(ur_node_t* node)
 # Copy the current state of the log probs into out
