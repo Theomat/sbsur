@@ -22,7 +22,7 @@ cdef class SequenceGenerator:
         else:
             self.generator = mt19937(seed)
 
-    cdef double* get_log_probs(self, vector[int] sequence_prefix):
+    cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
         try:
             # recover Python function object from void* argument
             func = <object>self.pyfun_get_log_probs
@@ -30,17 +30,21 @@ cdef class SequenceGenerator:
             ret = func([x for x in sequence_prefix])
             # If None is returned the ned of the sequence is reached
             if ret is None:
+                categories_ptr[0] = 0
                 return NULL
             # Perhaps this could be buffered somewhere?
             # Allocate C memory for it
             probs = <double*> PyMem_Malloc(sizeof(double) * len(ret))
             if not probs:
+                categories_ptr[0] = 0
                 raise MemoryError()
             for i in range(len(ret)):
                 probs[i] = ret[i]
+            categories_ptr[0] = len(ret)
             return probs
         except:
             # catch any Python errors and return NULL
+            categories_ptr[0] = 0
             return NULL
     cdef ur_node_t* get_state(self):
         return self.root

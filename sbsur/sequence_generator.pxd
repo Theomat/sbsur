@@ -15,7 +15,7 @@ cdef class SequenceGenerator:
     cdef int max_categories
     cdef mt19937 generator
 
-    cdef double* get_log_probs(self, vector[int] sequence_prefix)
+    cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr)
     cdef ur_node_t* get_state(self)
     cdef int get_max_categories(self)
     cdef mt19937 get_generator(self)
