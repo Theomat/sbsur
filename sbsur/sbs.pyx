@@ -284,10 +284,12 @@ cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size) n
 cpdef list[list[int]] sample(SequenceGenerator generator, int batch_size):
     cdef vector[vector[int]] out = c_sample(generator, batch_size)
     cdef list[list[int]] sequences = []
+    cdef vector[int] rseq
     cdef list[int] seq
     cdef int el
-    for seq in out:
-        sequences.append([])
-        for el in seq:
-            sequences[-1].append(el)
+    for rseq in out:
+        seq = []
+        for el in rseq:
+            seq.append(el)
+        sequences.append(seq)
     return sequences
