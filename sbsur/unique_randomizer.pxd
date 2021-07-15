@@ -6,10 +6,12 @@ ctypedef struct ur_node_t
 
 # Allocates an empty node
 cdef ur_node_t *ur_new()
-# Allocates en empty node with given probabilities
+# Allocates en empty node with given probabilities, the double* given has been allocated for the use of this node and becomes its repsonsability memory wise
 cdef ur_node_t *ur_new_with_log_probs(double* log_probs, size_t size)
 # Free the specified node (should it free its children? no because the children should be already freed when called)
 cdef ur_free(ur_node_t* node)
+# Free the specified node and all of its children
+cdef ur_free_all(ur_node_t* node)
 
 # True if we have created the specified child
 cdef bool ur_is_child_expanded(ur_node_t *parent, int child_index)
