@@ -1,4 +1,8 @@
 # distutils: language=c++
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: initializedcheck=False
+# cython: cdivision=True
 from libcpp.vector cimport vector
 # Use the cython ones, they are thread-safe and give stats to python memory manager while behaving like C-ones (no GIL)
 from cpython.mem cimport PyMem_Malloc
