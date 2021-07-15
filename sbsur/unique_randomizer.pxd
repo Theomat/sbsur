@@ -1,5 +1,6 @@
 # distutils: language=c++
 from libcpp.vector cimport vector
+from libcpp cimport bool
 
 # With a 'ctypedef' this struct should be referred as 'ur_node_t' instead of 'struct ur_node_t'
 ctypedef struct ur_node_t
