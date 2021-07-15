@@ -20,7 +20,7 @@ cdef bool ur_is_child_expanded(ur_node_t *parent, int child_index)
 # Create the specified child with the given log probs
 cdef ur_node_t *ur_expand_node(ur_node_t *parent, double *log_probs, size_t categories, int child_index)
 # Simple getter
-cdef ur_node_t* ur_get_children(ur_node_t* node, int child_index)
+cdef ur_node_t* ur_get_child(ur_node_t* node, int child_index)
 cdef size_t ur_get_categories(ur_node_t *node)
 # Return true => this node can be freed
 cdef bool ur_is_exhausted(ur_node_t* node)
