@@ -18,7 +18,7 @@ from random_wrapper cimport uniform_real_distribution, mt19937
 ctypedef ur_node_t* ur_node_ptr
 
 
-cdef vector[int] build_sequence(ur_node_t* leaf) nogil:
+cdef vector[int] build_sequence(ur_node_t* leaf):
     cdef vector[int] sequence = vector[int]()
     cdef ur_node_t* current = leaf
     while ur_has_parent(current):
@@ -32,33 +32,33 @@ cdef class GumbelHeap:
     cdef vector[float] gumbels
     cdef int index
 
-    def __cinit__(self, int batch_size) nogil:
+    def __cinit__(self, int batch_size):
         self.nodes = vector[ur_node_ptr](batch_size)
         self.log_probs = vector[float](batch_size)
         self.gumbels = vector[float](batch_size)
         self.index = 0
 
-    cdef int size(self) nogil:
+    cdef int size(self):
         return self.nodes.size()
 
-    cdef push_all(self, vector[ur_node_ptr] nodes, vector[float] log_probs, vector[float] gumbels) nogil:
+    cdef push_all(self, vector[ur_node_ptr] nodes, vector[float] log_probs, vector[float] gumbels):
         # This could be optimized by only percolating up the leaves
         for i in range(nodes.size()):
             self.push(nodes[i], log_probs[i], gumbels[i])
 
-    cdef push_and_discard(self, ur_node_t* node, float logprob, float gumbel) nogil:
+    cdef push_and_discard(self, ur_node_t* node, float logprob, float gumbel):
         self.nodes[0] = node
         self.log_probs[0] = logprob
         self.gumbels[0] = gumbel
         self.__percolate_down__(0)
 
-    cdef push(self, ur_node_t* node, float logprob, float gumbel) nogil:
+    cdef push(self, ur_node_t* node, float logprob, float gumbel):
         self.nodes.push_back(node)
         self.log_probs.push_back(logprob)
         self.gumbels.push_back(gumbel)
         self.__percolate_up__(self.nodes.size() - 1)
 
-    cdef __percolate_down__(self, int index) nogil:
+    cdef __percolate_down__(self, int index):
         cdef int size = self.nodes.size()
         cdef int i = index
         cdef ur_node_t* node = self.nodes[i]
@@ -103,7 +103,7 @@ cdef class GumbelHeap:
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
 
-    cdef __percolate_up__(self, int index) nogil:
+    cdef __percolate_up__(self, int index):
         cdef int i = index
         cdef ur_node_t* node = self.nodes[i]
         cdef float logprob = self.log_probs[i]
@@ -118,7 +118,7 @@ cdef class GumbelHeap:
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
 
-    cdef ur_node_t* iterate(self, float* logprob_ptr, float* gumbel_ptr) nogil:
+    cdef ur_node_t* iterate(self, float* logprob_ptr, float* gumbel_ptr):
         cdef ur_node_t* node = self.nodes[self.index]
         # The [0] is the tirck to replace the C * operator
         logprob_ptr[0] = self.log_probs[self.index]
@@ -126,16 +126,16 @@ cdef class GumbelHeap:
         self.index += 1
         return node
 
-    cdef reset(self) nogil:
+    cdef reset(self):
         self.index = 0
         self.nodes.clear()
         self.log_probs.clear()
         self.gumbels.clear()
 
-    cdef float min(self) nogil:
+    cdef float min(self):
         return self.gumbels[0]
 
-cdef update_with_candidate(GumbelHeap heap, ur_node_t* candidate, float logprob, float gumbel, int batch_size) nogil:
+cdef update_with_candidate(GumbelHeap heap, ur_node_t* candidate, float logprob, float gumbel, int batch_size):
     # Not enough internal candidates yet
     if heap.size() < batch_size:
         heap.push(candidate, logprob, gumbel)
@@ -146,7 +146,7 @@ cdef update_with_candidate(GumbelHeap heap, ur_node_t* candidate, float logprob,
     # So we whould discard the min
     heap.push_and_discard(candidate, logprob, gumbel)
 
-cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double] dist, mt19937 gen) nogil:
+cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double] dist, mt19937 gen):
     cdef float max_gumbel = -9999999999
     for i in range(nb_children):
         if not possibles[i]:
@@ -168,7 +168,7 @@ cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, do
         if gumbels[i] <= max_gumbel:
             gumbels[i] -= log(1 + exp(-abs(v)))
 
-cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size) nogil:
+cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size):
     cdef vector[vector[int]] out = vector[vector[int]](batch_size)
     cdef ur_node_t* root = generator.get_state()
     if ur_is_exhausted(root) or batch_size <= 0:
