@@ -3,12 +3,6 @@ import setuptools
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 
-try:
-  import numpy
-except:
-  assert False, "Numpy needs to be installed for correct cython compilation!"
-
-
 def run_setup():
   """Installs SBSUR."""
 
@@ -26,12 +20,11 @@ def run_setup():
       url='https://github.com/Theomat/sbsur',
       packages=setuptools.find_packages(),
       install_requires=[
-        'numpy >= 1.15.4', # Update numpy version compatible with ptyhon 3.6
         'cython'
       ],
-      extras_require={'dev': ['pytest', 'scipy']},
+      extras_require={'dev': ['pytest', 'numpy']},
       python_requires='>=3.6',
-      ext_modules=cythonize("sbsur/*.pyx", include_path=[numpy.get_include()]),
+      ext_modules=cythonize("sbsur/*.pyx"),
       zip_safe=False,
       cmdclass = {'build_ext':build_ext}
   )
