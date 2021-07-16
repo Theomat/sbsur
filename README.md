@@ -46,7 +46,8 @@ For development:
 
 ```bash
 pip install cython numpy pytest
-pip install git+https://github.com/Theomat/sbsur
+git clone https://github.com/Theomat/sbsur
+pip install -e ./sbsur
 ```
 
 ## Multithreading
