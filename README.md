@@ -15,9 +15,9 @@ from math import log
 from sbsur import SequenceGenerator, sample
 
 def get_logprobs(sequence: list[int]) -> Optional[list[float]]:
-    if len(sequences) == 0:
+    if len(sequence) == 0:
         return [log(.4), log(.6)]
-    if len(sequences) == 1 and sequence[0] == 0:
+    if len(sequence) == 1 and sequence[0] == 0:
         return [log(.5), log(.5)]
     return None
 
