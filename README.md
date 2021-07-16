@@ -32,3 +32,23 @@ sequence_list_two: list[list[int]] = sample(gen, 2)
 # However since there are only three sequences it only returns ones: the missign sequence
 assert len(sequence_list_two) == 1
 ```
+
+## Installation
+
+For a production usage:
+
+```bash
+pip install cython
+pip install git+https://github.com/Theomat/sbsur
+```
+
+For development:
+
+```bash
+pip install cython numpy pytest
+pip install git+https://github.com/Theomat/sbsur
+```
+
+## Multithreading
+
+In Python, multithreading is organised around a Global Interpreter Lock (GIL). In the case of CPU bound tasks such as ours, the GIL is never released. However in Cython one can use the nogil qualifier to express that the GIL is not required, this qualifier add constraints on the development of Cython and this was not done in this project, to use this qualifier, the code should be ported to C++. Instead you can use multiprocessing, each process will have its own GIL so you will benefit from performances improvements. Furthermore, except for the GIL, the code has been designed to not use global locks.
