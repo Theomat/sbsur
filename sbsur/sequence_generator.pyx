@@ -26,11 +26,15 @@ cdef class SequenceGenerator:
         cdef int i
         cdef double* probs
         cdef object func
+        cdef list[int] arg = []
+        # sequence_prefix is in reversed order
+        for i in sequence_prefix:
+            arg.append(i)
         try:
             # recover Python function object from void* argument
             func = <object>self.pyfun_get_log_probs
-            # call function, convert result into 0/1 for True/False
-            ret = func([x for x in sequence_prefix])
+            # call function, convert result
+            ret = func(arg)
             # If None is returned the ned of the sequence is reached
             if ret is None:
                 categories_ptr[0] = 0
