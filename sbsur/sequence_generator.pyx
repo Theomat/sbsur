@@ -23,6 +23,9 @@ cdef class SequenceGenerator:
             self.generator = mt19937(seed)
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
+        cdef int i
+        cdef double* probs
+        cdef object func
         try:
             # recover Python function object from void* argument
             func = <object>self.pyfun_get_log_probs

@@ -42,6 +42,7 @@ cdef class GumbelHeap:
         return self.nodes.size()
 
     cdef push_all(self, vector[ur_node_ptr] nodes, vector[float] log_probs, vector[float] gumbels):
+        cdef int i
         # This could be optimized by only percolating up the leaves
         for i in range(nodes.size()):
             self.push(nodes[i], log_probs[i], gumbels[i])
@@ -148,6 +149,7 @@ cdef update_with_candidate(GumbelHeap heap, ur_node_t* candidate, float logprob,
 
 cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double] dist, mt19937 gen):
     cdef float max_gumbel = -9999999999
+    cdef int i
     for i in range(nb_children):
         if not possibles[i]:
             continue
@@ -199,6 +201,7 @@ cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size):
     cdef int nb_children
     cdef float logprob
     cdef float gumbel
+    cdef int i
     # Buffers
     cdef double* buffer_logprobs = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
     cdef double* buffer_gumbels = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
@@ -272,6 +275,7 @@ cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size):
     PyMem_Free(possibles)
 
     # Build sampled sequences
+    cdef ur_node_t* leaf
     for leaf in leaves:
         # Build sequence
         out.push_back(build_sequence(leaf))
