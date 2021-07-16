@@ -170,8 +170,8 @@ cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, do
         if gumbels[i] <= max_gumbel:
             gumbels[i] -= log(1 + exp(-abs(v)))
 
-cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size):
-    cdef vector[vector[int]] out = vector[vector[int]](batch_size)
+cdef vector[(vector[int], float)] c_sample(SequenceGenerator generator, int batch_size):
+    cdef vector[(vector[int], float)] out = [] #vector[(vector[int], float)](batch_size) doesn't work and can't be instancied
     cdef ur_node_t* root = generator.get_state()
     if ur_is_exhausted(root) or batch_size <= 0:
         return out
@@ -276,24 +276,31 @@ cdef vector[vector[int]] c_sample(SequenceGenerator generator, int batch_size):
 
     # Build sampled sequences
     cdef ur_node_t* leaf
-    for leaf in leaves:
+    for i in range(leaves.size()):
+        leaf = leaves[i]
         # Build sequence
-        out.push_back(build_sequence(leaf))
+        out.push_back((build_sequence(leaf), leaves_gumbels[i]))
         # Mark sampled
         ur_mark_sampled(leaf)
 
     return out
 
 
-cpdef list[list[int]] sample(SequenceGenerator generator, int batch_size):
-    cdef vector[vector[int]] out = c_sample(generator, batch_size)
-    cdef list[list[int]] sequences = []
+def sample(generator: SequenceGenerator, batch_size: int) -> list[list[int]]:
+    cdef vector[(vector[int], float)] sampled = c_sample(generator, batch_size)
+    sequences = []
+    cdef (vector[int], float) element
     cdef vector[int] rseq
+    cdef float gumbel
     cdef list[int] seq
     cdef int el
-    for rseq in out:
+    for element in sampled:
+        rseq, gumbel = element
         seq = []
         for el in rseq:
             seq.append(el)
-        sequences.append(seq)
-    return sequences
+        sequences.append((seq, gumbel))
+    # Sort them according to sampling order
+    sequences.sort(key=lambda s:s[1], reversed=True)
+    cdef list[list[int]] output = [x[0] for x in sequences]
+    return output
