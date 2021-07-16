@@ -19,7 +19,7 @@ def get_logprobs(sequence: list[int]) -> Optional[list[float]]:
         return [log(.4), log(.6)]
     if len(sequence) == 1 and sequence[0] == 0:
         return [log(.5), log(.5)]
-    return None
+    return None # indicates that after this sequence prefix there should be no further sampling
 
 max_categories: int = 2 # since at any decision there is at most 2 choices
 seed: int = 0
@@ -29,7 +29,7 @@ gen: SequenceGenerator = SequenceGenerator(get_logprobs, max_categories, seed)
 sequence_list: list[list[int]] = sample(gen, 2) 
 # We can sample again a batch of 2
 sequence_list_two: list[list[int]] = sample(gen, 2) 
-# However since there are only three sequences it only returns ones: the missign sequence
+# However since there are only three sequences it only returns one: the missing sequence
 assert len(sequence_list_two) == 1
 ```
 
