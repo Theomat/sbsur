@@ -50,6 +50,21 @@ git clone https://github.com/Theomat/sbsur
 pip install -e ./sbsur
 ```
 
+## Performance Comparison
+
+Here we show the performance gain of using our implementation compared to the [Unique Randomizer](https://github.com/google-research/unique-randomizer)(UR) implementation of the combination.
+The performance comparison is done on a single thread on a i7-9750H.
+We test the performance on different configurations of sequences with `k` categories of length `n` sampled with a batch size `b`.
+We measure the average time it takes to sample in a given configuration until exhaustion of the sequences.
+
+| Use Case            | SBSUR (us) | [UR](https://github.com/google-research/unique-randomizer) |
+|---------------------|------------|----------|
+| `k=10, n=5, b=10`   | x1         | xY.ZZ    |
+| `k=10, n=5, b=100`  | x1         | xY.ZZ    |
+| `k=10, n=7, b=10`   | x1         | xY.ZZ    |
+| `k=20, n=5, b=10`   | x1         | xY.ZZ    |
+| `k=200, n=3, b=200` | x1         | xY.ZZ    |
+
 ## Multithreading
 
 In Python, multithreading is organised around a Global Interpreter Lock (GIL). In the case of CPU bound tasks such as ours, the GIL is never released. However in Cython one can use the nogil qualifier to express that the GIL is not required, this qualifier add constraints on the development of Cython and this was not done in this project, to use this qualifier, the code should be ported to C++. Instead you can use multiprocessing, each process will have its own GIL so you will benefit from performances improvements. Furthermore, except for the GIL, the code has been designed to not use global locks.
