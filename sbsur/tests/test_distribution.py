@@ -34,8 +34,8 @@ def test_proportions():
     # representation of this logic.
 
     results = []
-    for _ in range(10000):
-      seq_gen = SequenceGenerator(get_logprobs, 2, None)
+    for i in range(10000):
+      seq_gen = SequenceGenerator(get_logprobs, 2, i)
       seqs = sample(seq_gen, 3)
       results.append(seq2output(seqs))
 
