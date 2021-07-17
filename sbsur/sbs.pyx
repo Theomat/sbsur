@@ -5,7 +5,7 @@
 # cython: cdivision=True
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from libc.math cimport log, exp
+from libc.math cimport log, exp, fabs, fmax
 from sequence_generator cimport SequenceGenerator
 from unique_randomizer cimport ur_node_t, ur_is_exhausted, ur_get_log_probs, ur_get_parent, ur_is_leaf, ur_get_child, ur_get_index_in_parent, ur_get_categories, ur_mark_sampled, ur_has_parent, ur_get_possibles, ur_is_terminal, ur_is_child_expanded, ur_expand_node, ur_add_terminal_node
 # Use the cython ones, they are thread-safe and give stats to python memory manager while behaving like C-ones (no GIL)
@@ -73,7 +73,7 @@ cdef class GumbelHeap:
                 if gumbel > self.gumbels[left]:
                     if gumbel > self.gumbels[right]:
                         # Both are possible
-                    # Chose right arbitrarily
+                        # Chose right arbitrarily
                         self.nodes[i] = self.nodes[right]
                         self.log_probs[i] = self.log_probs[right]
                         self.gumbels[i] = self.gumbels[right]
@@ -92,12 +92,12 @@ cdef class GumbelHeap:
                     break
             else:
                 if gumbel > self.gumbels[left]:
-                self.nodes[i] = self.nodes[left]
-                self.log_probs[i] = self.log_probs[left]
-                self.gumbels[i] = self.gumbels[left]
-                i = left
-            else:
-                break
+                    self.nodes[i] = self.nodes[left]
+                    self.log_probs[i] = self.log_probs[left]
+                    self.gumbels[i] = self.gumbels[left]
+                    i = left
+                else:
+                    break
             # Update child index
             left = 2 * i + 1
             right = 2 * i + 2
@@ -170,9 +170,9 @@ cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, 
             v = 0
         else:
             v += log(1 - exp(gumbels[i] - max_gumbel))
-        gumbels[i] = target_max - max(v, 0)
+        gumbels[i] = target_max - fmax(v, 0)
         if gumbels[i] <= max_gumbel:
-            gumbels[i] -= log(1 + exp(-abs(v)))
+            gumbels[i] -= log(1 + exp(-fabs(v)))
 
 cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int batch_size):
     cdef vector[(vector[int], double)] out = [] #vector[(vector[int], float)](batch_size) doesn't work and can't be instancied
