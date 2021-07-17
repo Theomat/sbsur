@@ -32,10 +32,10 @@ cdef class GumbelHeap:
     cdef vector[double] gumbels
     cdef int index
 
-    def __cinit__(self, int batch_size):
-        self.nodes = vector[ur_node_ptr](batch_size)
-        self.log_probs = vector[double](batch_size)
-        self.gumbels = vector[double](batch_size)
+    def __cinit__(self):
+        self.nodes = vector[ur_node_ptr]()
+        self.log_probs = vector[double]()
+        self.gumbels = vector[double]()
         self.index = 0
 
     cdef int size(self):
@@ -181,15 +181,15 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef mt19937 gen = generator.get_generator()
 
     # Current state
-    cdef vector[ur_node_ptr] internal = vector[ur_node_ptr](batch_size)
-    cdef vector[double] internal_log_probs = vector[double](batch_size)
-    cdef vector[double] internal_gumbels = vector[double](batch_size)
+    cdef vector[ur_node_ptr] internal = vector[ur_node_ptr]()
+    cdef vector[double] internal_log_probs = vector[double]()
+    cdef vector[double] internal_gumbels = vector[double]()
     # Next expansion state
-    cdef GumbelHeap heap = GumbelHeap.__new__(GumbelHeap, batch_size)
+    cdef GumbelHeap heap = GumbelHeap.__new__(GumbelHeap)
     # Leaves
-    cdef vector[ur_node_ptr] leaves = vector[ur_node_ptr](batch_size)
-    cdef vector[double] leaves_logprobs = vector[double](batch_size)
-    cdef vector[double] leaves_gumbels = vector[double](batch_size)
+    cdef vector[ur_node_ptr] leaves = vector[ur_node_ptr]()
+    cdef vector[double] leaves_logprobs = vector[double]()
+    cdef vector[double] leaves_gumbels = vector[double]()
 
     # Initialisation
     internal.push_back(root)
