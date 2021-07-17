@@ -26,6 +26,8 @@ cdef void ur_free_all(ur_node_t* node)
 
 # True if we have created the specified child
 cdef bool ur_is_child_expanded(ur_node_t *parent, int child_index)
+# Should only be used for the root
+cdef void ur_set_logprobs(ur_node_t *node, double *log_probs, int categories)
 # Create the specified child with the given log probs
 cdef void ur_expand_node(ur_node_t *parent, double *log_probs, int categories, int child_index)
 # Add a new terminal child
