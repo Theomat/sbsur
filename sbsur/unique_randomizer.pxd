@@ -3,7 +3,19 @@ from libcpp cimport bool
 
 # Why do we need a struct? So that we can manage the memory as we want
 # should be referred as 'ur_node_t' instead of 'struct ur_node_t'
-cdef struct ur_node_t
+cdef struct ur_node_t:
+    double* logprobs
+    bool normed
+    bool* possibles
+    double unsampled_fraction
+    double* original_logprobs
+    int eventualities
+    bool exhausted
+    int categories
+    ur_node_t** children
+    bool terminal
+    ur_node_t* parent
+    int index_in_parent
 
 # Allocates an empty node
 cdef ur_node_t *ur_new()
@@ -31,12 +43,9 @@ cdef void ur_get_possibles(ur_node_t* node, bool* out)
 cdef bool ur_is_leaf(ur_node_t* node)
 # A terminal is a node that has no child and will have no child, a terminal node can't be sampled
 cdef bool ur_is_terminal(ur_node_t* node)
-cdef void ur_mark_terminal(ur_node_t* node)
 cdef bool ur_has_parent(ur_node_t* node)
 # Copy the current state of the log probs into out
 cdef void ur_get_log_probs(ur_node_t * node, double* out)
 
 # Update probabilities after seeing sequence stopped at the resulting leaf node
 cdef void ur_mark_sampled(ur_node_t* leaf)
-
-#endif
