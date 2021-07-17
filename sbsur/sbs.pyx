@@ -240,7 +240,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
 
             # Update candidates
             for i in range(nb_children):
-                if not possibles[i]:
+                if not possibles[i] or not should_add_candidate(heap, buffer_gumbels[i], batch_size):
                     continue 
                 
                 # Check if child exists and creates it if it doesn't
