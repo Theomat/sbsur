@@ -302,5 +302,5 @@ def sample(generator: SequenceGenerator, batch_size: int) -> list[list[int]]:
         sequences.append((seq, gumbel))
     # Sort them according to sampling order
     sequences.sort(key=lambda s:s[1], reverse=True)
-    cdef list[list[int]] output = [x[0] for x in sequences]
+    output = [x[0] for x in sequences]
     return output
