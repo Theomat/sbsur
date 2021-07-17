@@ -109,11 +109,11 @@ cdef class GumbelHeap:
         cdef ur_node_t* node = self.nodes[i]
         cdef double logprob = self.log_probs[i]
         cdef double gumbel = self.gumbels[i]
-        while i > 0 and gumbel < self.gumbels[i // 2]:
-            self.nodes[i] = self.nodes[i // 2]
-            self.log_probs[i] = self.log_probs[i // 2]
-            self.gumbels[i] = self.gumbels[i // 2]
-            i = i // 2 
+        while i > 0 and gumbel < self.gumbels[(i - 1) // 2]:
+            self.nodes[i] = self.nodes[(i - 1)  // 2]
+            self.log_probs[i] = self.log_probs[(i - 1)  // 2]
+            self.gumbels[i] = self.gumbels[(i - 1)  // 2]
+            i = (i - 1) // 2 
         if i != index:
             self.nodes[i] = node
             self.log_probs[i] = logprob
