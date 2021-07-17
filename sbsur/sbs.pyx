@@ -68,13 +68,12 @@ cdef class GumbelHeap:
 
         cdef int left = 2 * i + 1
         cdef int right = 2 * i + 2
-        while i < size // 2:
-            left = 2 * i + 1
-            right = 2 * i + 2
-            if left < size and right < size:
-                if self.gumbels[left] < gumbel:
+        while left < size:
+            if right < size:
+                if gumbel > self.gumbels[left]:
+                    if gumbel > self.gumbels[right]:
+                        # Both are possible
                     # Chose right arbitrarily
-                    if self.gumbels[right] < gumbel:
                         self.nodes[i] = self.nodes[right]
                         self.log_probs[i] = self.log_probs[right]
                         self.gumbels[i] = self.gumbels[right]
@@ -84,20 +83,24 @@ cdef class GumbelHeap:
                         self.log_probs[i] = self.log_probs[left]
                         self.gumbels[i] = self.gumbels[left]
                         i = left
-                elif self.gumbels[right] < gumbel:
+                elif gumbel > self.gumbels[right]:
                     self.nodes[i] = self.nodes[right]
                     self.log_probs[i] = self.log_probs[right]
                     self.gumbels[i] = self.gumbels[right]
                     i = right
                 else:
                     break
-            elif left < size and self.gumbels[left] < gumbel:
+            else:
+                if gumbel > self.gumbels[left]:
                 self.nodes[i] = self.nodes[left]
                 self.log_probs[i] = self.log_probs[left]
                 self.gumbels[i] = self.gumbels[left]
                 i = left
             else:
                 break
+            # Update child index
+            left = 2 * i + 1
+            right = 2 * i + 2
             
         if i != index:
             self.nodes[i] = node
