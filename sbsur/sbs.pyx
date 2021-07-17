@@ -215,7 +215,10 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     while not internal.empty():
         # Add leaves to next_nodes
         heap.push_all(leaves, leaves_logprobs, leaves_gumbels)
-
+        # Clear leaves
+        leaves.clear()
+        leaves_logprobs.clear()
+        leaves_gumbels.clear()
         # Expand one depth level deeper
         while not internal.empty():
             # Take one internal node
