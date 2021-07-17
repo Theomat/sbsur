@@ -10,7 +10,7 @@ cdef class SequenceGenerator:
     # get_log_probs is a Python callback
     #   get_log_probs: vector<int> -> double* is the C++ signature
     #   get_log_probs: list[int] -> Optional[Union[list[float], np.ndarray[float]]] is  the Python signature
-    cdef void* pyfun_get_log_probs
+    cdef object pyfun_get_log_probs
     cdef ur_node_t* root
     cdef int max_categories
     cdef mt19937 generator
