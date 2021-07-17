@@ -204,6 +204,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef double logprob
     cdef double gumbel
     cdef int i
+    cdef vector[int] sequence
     # Buffers
     cdef double* buffer_logprobs = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
     cdef double* buffer_gumbels = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
@@ -246,7 +247,9 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                 # Check if child exists and creates it if it doesn't
                 if not ur_is_child_expanded(current, i):
                     # Get new logprobs
-                    new_node_logprobs = generator.get_log_probs(build_sequence(current), &new_node_categories)
+                    sequence = build_sequence(current)
+                    sequence.push_back(i)
+                    new_node_logprobs = generator.get_log_probs(sequence, &new_node_categories)
                     if new_node_categories == 0:
                         # There is no sequence afterwards
                         ur_add_terminal_node(current, i)                    
