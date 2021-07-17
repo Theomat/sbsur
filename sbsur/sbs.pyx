@@ -28,43 +28,43 @@ cdef vector[int] build_sequence(ur_node_t* leaf):
 
 cdef class GumbelHeap:
     cdef vector[ur_node_ptr] nodes
-    cdef vector[float] log_probs
-    cdef vector[float] gumbels
+    cdef vector[double] log_probs
+    cdef vector[double] gumbels
     cdef int index
 
     def __cinit__(self, int batch_size):
         self.nodes = vector[ur_node_ptr](batch_size)
-        self.log_probs = vector[float](batch_size)
-        self.gumbels = vector[float](batch_size)
+        self.log_probs = vector[double](batch_size)
+        self.gumbels = vector[double](batch_size)
         self.index = 0
 
     cdef int size(self):
         return self.nodes.size()
 
-    cdef push_all(self, vector[ur_node_ptr] nodes, vector[float] log_probs, vector[float] gumbels):
+    cdef void push_all(self, vector[ur_node_ptr] nodes, vector[double] log_probs, vector[double] gumbels):
         cdef int i
         # This could be optimized by only percolating up the leaves
         for i in range(nodes.size()):
             self.push(nodes[i], log_probs[i], gumbels[i])
 
-    cdef push_and_discard(self, ur_node_t* node, float logprob, float gumbel):
+    cdef void push_and_discard(self, ur_node_t* node, double logprob, double gumbel):
         self.nodes[0] = node
         self.log_probs[0] = logprob
         self.gumbels[0] = gumbel
         self.__percolate_down__(0)
 
-    cdef push(self, ur_node_t* node, float logprob, float gumbel):
+    cdef void push(self, ur_node_t* node, double logprob, double gumbel):
         self.nodes.push_back(node)
         self.log_probs.push_back(logprob)
         self.gumbels.push_back(gumbel)
         self.__percolate_up__(self.nodes.size() - 1)
 
-    cdef __percolate_down__(self, int index):
+    cdef void __percolate_down__(self, int index):
         cdef int size = self.nodes.size()
         cdef int i = index
         cdef ur_node_t* node = self.nodes[i]
-        cdef float logprob = self.log_probs[i]
-        cdef float gumbel = self.gumbels[i]
+        cdef double logprob = self.log_probs[i]
+        cdef double gumbel = self.gumbels[i]
 
         cdef int left = 2 * i + 1
         cdef int right = 2 * i + 2
@@ -104,11 +104,11 @@ cdef class GumbelHeap:
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
 
-    cdef __percolate_up__(self, int index):
+    cdef void __percolate_up__(self, int index):
         cdef int i = index
         cdef ur_node_t* node = self.nodes[i]
-        cdef float logprob = self.log_probs[i]
-        cdef float gumbel = self.gumbels[i]
+        cdef double logprob = self.log_probs[i]
+        cdef double gumbel = self.gumbels[i]
         while i > 0 and gumbel < self.gumbels[i // 2]:
             self.nodes[i] = self.nodes[i // 2]
             self.log_probs[i] = self.log_probs[i // 2]
@@ -119,7 +119,7 @@ cdef class GumbelHeap:
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
 
-    cdef ur_node_t* iterate(self, float* logprob_ptr, float* gumbel_ptr):
+    cdef ur_node_t* iterate(self, double* logprob_ptr, double* gumbel_ptr):
         cdef ur_node_t* node = self.nodes[self.index]
         # The [0] is the tirck to replace the C * operator
         logprob_ptr[0] = self.log_probs[self.index]
@@ -127,28 +127,30 @@ cdef class GumbelHeap:
         self.index += 1
         return node
 
-    cdef reset(self):
+    cdef void reset(self):
         self.index = 0
         self.nodes.clear()
         self.log_probs.clear()
         self.gumbels.clear()
 
-    cdef float min(self):
+    cdef double min(self):
+        if nodes.size() == 0:
+            return -9999999999.0
         return self.gumbels[0]
 
-cdef update_with_candidate(GumbelHeap heap, ur_node_t* candidate, float logprob, float gumbel, int batch_size):
+cdef void update_with_candidate(GumbelHeap heap, ur_node_t* candidate, double logprob, double gumbel, int batch_size):
     # Not enough internal candidates yet
     if heap.size() < batch_size:
         heap.push(candidate, logprob, gumbel)
         return
-    # First eliminate candidates that have gumbels <= to the min
-    if heap.min() >= gumbel:
-        return
     # So we whould discard the min
     heap.push_and_discard(candidate, logprob, gumbel)
 
-cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double] dist, mt19937 gen):
-    cdef float max_gumbel = -9999999999
+cdef bool should_add_candidate(GumbelHeap heap, double gumbel, int batch_size):
+    return heap.size() < batch_size or heap.min() < gumbel
+
+cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double] dist, mt19937 gen):
+    cdef double max_gumbel = -9999999999.0
     cdef int i
     for i in range(nb_children):
         if not possibles[i]:
@@ -157,7 +159,7 @@ cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, do
         if gumbels[i] > max_gumbel:
             max_gumbel = gumbels[i]
     # Use equations (23) and (24) in Appendix B.3 of the SBS paper.
-    cdef float v = 0
+    cdef double v = 0
     for i in range(nb_children):
         if not possibles[i]:
             continue
@@ -170,8 +172,8 @@ cdef float sample_gumbels(float target_max, int nb_children, bool* possibles, do
         if gumbels[i] <= max_gumbel:
             gumbels[i] -= log(1 + exp(-abs(v)))
 
-cdef vector[(vector[int], float)] c_sample(SequenceGenerator generator, int batch_size):
-    cdef vector[(vector[int], float)] out = [] #vector[(vector[int], float)](batch_size) doesn't work and can't be instancied
+cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int batch_size):
+    cdef vector[(vector[int], double)] out = [] #vector[(vector[int], float)](batch_size) doesn't work and can't be instancied
     cdef ur_node_t* root = generator.get_state()
     if ur_is_exhausted(root) or batch_size <= 0:
         return out
@@ -180,14 +182,14 @@ cdef vector[(vector[int], float)] c_sample(SequenceGenerator generator, int batc
 
     # Current state
     cdef vector[ur_node_ptr] internal = vector[ur_node_ptr](batch_size)
-    cdef vector[float] internal_log_probs = vector[float](batch_size)
-    cdef vector[float] internal_gumbels = vector[float](batch_size)
+    cdef vector[double] internal_log_probs = vector[double](batch_size)
+    cdef vector[double] internal_gumbels = vector[double](batch_size)
     # Next expansion state
     cdef GumbelHeap heap = GumbelHeap.__new__(GumbelHeap, batch_size)
     # Leaves
     cdef vector[ur_node_ptr] leaves = vector[ur_node_ptr](batch_size)
-    cdef vector[float] leaves_logprobs = vector[float](batch_size)
-    cdef vector[float] leaves_gumbels = vector[float](batch_size)
+    cdef vector[double] leaves_logprobs = vector[double](batch_size)
+    cdef vector[double] leaves_gumbels = vector[double](batch_size)
 
     # Initialisation
     internal.push_back(root)
@@ -196,11 +198,11 @@ cdef vector[(vector[int], float)] c_sample(SequenceGenerator generator, int batc
 
     # Loop variables
     cdef ur_node_t* current
-    cdef float current_log_prob
-    cdef float current_gumbel 
+    cdef double current_log_prob
+    cdef double current_gumbel 
     cdef int nb_children
-    cdef float logprob
-    cdef float gumbel
+    cdef double logprob
+    cdef double gumbel
     cdef int i
     # Buffers
     cdef double* buffer_logprobs = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
