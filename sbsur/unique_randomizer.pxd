@@ -4,13 +4,12 @@ from libcpp cimport bool
 # Why do we need a struct? So that we can manage the memory as we want
 # should be referred as 'ur_node_t' instead of 'struct ur_node_t'
 cdef struct ur_node_t:
-    double* logprobs
-    bool normed
-    bool* possibles
-    double unsampled_fraction
     double* original_logprobs
+    double* logprobs
+    bool* possibles
     int eventualities
-    bool exhausted
+    double unsampled_fraction
+    bool normed
     int categories
     ur_node_t** children
     bool terminal
