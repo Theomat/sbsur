@@ -200,8 +200,6 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef double current_log_prob
     cdef double current_gumbel 
     cdef int nb_children
-    cdef double logprob
-    cdef double gumbel
     cdef int i
     cdef vector[int] sequence
     # Buffers
@@ -262,16 +260,16 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
         # Move from heap to leaves and internal
         for _ in range(heap.size()):
             # Pop from heap
-            current = heap.iterate(&logprob, &gumbel)
+            current = heap.iterate(&current_log_prob, &current_gumbel)
             if ur_is_terminal(current):
                 # Add to leaves
                 leaves.push_back(current)
-                leaves_logprobs.push_back(logprob)
-                leaves_gumbels.push_back(gumbel)
+                leaves_logprobs.push_back(current_log_prob)
+                leaves_gumbels.push_back(current_gumbel)
             else:
                 internal.push_back(current)
-                internal_log_probs.push_back(logprob)
-                internal_gumbels.push_back(gumbel)
+                internal_log_probs.push_back(current_log_prob)
+                internal_gumbels.push_back(current_gumbel)
         # Reset the heap
         heap.reset()
    
