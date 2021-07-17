@@ -31,7 +31,7 @@ cdef class SequenceGenerator:
     cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
         cdef int i
         cdef double* probs = NULL
-        cdef list[int] arg = []
+        cdef list arg = []
         # sequence_prefix is in reversed order
         for i in sequence_prefix:
             arg.append(i)
