@@ -7,7 +7,7 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from libc.math cimport log, exp
 from sequence_generator cimport SequenceGenerator
-from unique_randomizer cimport ur_node_t, ur_is_exhausted, ur_get_log_probs, ur_get_parent, ur_is_leaf, ur_get_child, ur_get_index_in_parent, ur_get_categories, ur_mark_sampled, ur_has_parent, ur_get_possibles, ur_is_terminal, ur_mark_terminal, ur_is_child_expanded, ur_expand_node, ur_add_terminal_node
+from unique_randomizer cimport ur_node_t, ur_is_exhausted, ur_get_log_probs, ur_get_parent, ur_is_leaf, ur_get_child, ur_get_index_in_parent, ur_get_categories, ur_mark_sampled, ur_has_parent, ur_get_possibles, ur_is_terminal, ur_is_child_expanded, ur_expand_node, ur_add_terminal_node
 # Use the cython ones, they are thread-safe and give stats to python memory manager while behaving like C-ones (no GIL)
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 # Thread safe PRNG (they wrap to C++ standard lib)
