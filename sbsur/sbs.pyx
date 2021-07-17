@@ -134,7 +134,7 @@ cdef class GumbelHeap:
         self.gumbels.clear()
 
     cdef double min(self):
-        if nodes.size() == 0:
+        if self.nodes.size() == 0:
             return -9999999999.0
         return self.gumbels[0]
 
