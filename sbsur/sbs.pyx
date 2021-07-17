@@ -165,14 +165,11 @@ cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, 
     for i in range(nb_children):
         if possibles[i] == 0:
             continue
-        v = target_max - gumbels[i]
         if gumbels[i] >= max_gumbel:
-            v = 0
+            gumbels[i] = target_max
         else:
-            v += log(1 - exp(gumbels[i] - max_gumbel))
-        gumbels[i] = target_max - fmax(v, 0)
-        if gumbels[i] <= max_gumbel:
-            gumbels[i] -= log(1 + exp(-fabs(v)))
+            v = target_max - gumbels[i] + log(1.0 - exp(gumbels[i] - max_gumbel))
+            gumbels[i] = target_max - fmax(v, 0.0) - log(1.0 + exp(-fabs(v)))
 
 cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int batch_size):
     cdef vector[(vector[int], double)] out = [] #vector[(vector[int], float)](batch_size) doesn't work and can't be instancied
