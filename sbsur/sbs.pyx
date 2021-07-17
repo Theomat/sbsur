@@ -120,12 +120,11 @@ cdef class GumbelHeap:
             self.gumbels[i] = gumbel
 
     cdef ur_node_t* iterate(self, double* logprob_ptr, double* gumbel_ptr):
-        cdef ur_node_t* node = self.nodes[self.index]
-        # The [0] is the tirck to replace the C * operator
+        # The [0] is the trick to replace the C * operator
         logprob_ptr[0] = self.log_probs[self.index]
         gumbel_ptr[0] = self.gumbels[self.index]
         self.index += 1
-        return node
+        return self.nodes[self.index - 1]
 
     cdef void reset(self):
         self.index = 0
