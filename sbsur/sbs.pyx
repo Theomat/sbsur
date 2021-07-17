@@ -152,7 +152,7 @@ cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, 
     cdef double max_gumbel = -9999999999.0
     cdef int i
     for i in range(nb_children):
-        if not possibles[i]:
+        if possibles[i] == 0:
             continue
         gumbels[i] = logprobs[i] - log(-log(dist(gen)))
         if gumbels[i] > max_gumbel:
@@ -160,7 +160,7 @@ cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, 
     # Use equations (23) and (24) in Appendix B.3 of the SBS paper.
     cdef double v = 0
     for i in range(nb_children):
-        if not possibles[i]:
+        if possibles[i] == 0:
             continue
         v = target_max - gumbels[i]
         if gumbels[i] >= max_gumbel:
@@ -240,10 +240,9 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
 
             # Fill buffer_gumbels with the appropriate data
             sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, dist, gen)
-
             # Update candidates
             for i in range(nb_children):
-                if not possibles[i] or not should_add_candidate(heap, buffer_gumbels[i], batch_size):
+                if possibles[i] == 0 or not should_add_candidate(heap, buffer_gumbels[i], batch_size):
                     continue 
                 
                 # Check if child exists and creates it if it doesn't
@@ -257,7 +256,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                         ur_add_terminal_node(current, i)                    
                     else:
                         ur_expand_node(current, new_node_logprobs, new_node_categories, i)
-
+                # Add candidate
                 update_with_candidate(heap, ur_get_child(current, i), buffer_logprobs[i], buffer_gumbels[i], batch_size)
 
         # Move from heap to leaves and internal
