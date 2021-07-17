@@ -146,6 +146,7 @@ cdef void exhaust(ur_node_t* node):
 cdef void ur_mark_sampled(ur_node_t* leaf):
     # I am a terminal node (a placeholder like)
     # So of course I have a parent
+    leaf.unsampled_fraction = 0
     mark_children_sampled(leaf.parent, leaf.index_in_parent)
 
 cdef void mark_children_sampled(ur_node_t* parent, int child_index):
