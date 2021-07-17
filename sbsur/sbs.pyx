@@ -183,7 +183,7 @@ cdef vector[(vector[int], float)] c_sample(SequenceGenerator generator, int batc
     cdef vector[float] internal_log_probs = vector[float](batch_size)
     cdef vector[float] internal_gumbels = vector[float](batch_size)
     # Next expansion state
-    cdef GumbelHeap heap = GumbelHeap.__new__(batch_size)
+    cdef GumbelHeap heap = GumbelHeap.__new__(GumbelHeap, batch_size)
     # Leaves
     cdef vector[ur_node_ptr] leaves = vector[ur_node_ptr](batch_size)
     cdef vector[float] leaves_logprobs = vector[float](batch_size)
