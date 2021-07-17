@@ -292,11 +292,11 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
 
 
 def sample(generator: SequenceGenerator, batch_size: int) -> list:
-    cdef vector[(vector[int], float)] sampled = c_sample(generator, batch_size)
+    cdef vector[(vector[int], double)] sampled = c_sample(generator, batch_size)
     sequences = []
-    cdef (vector[int], float) element
+    cdef (vector[int], double) element
     cdef vector[int] rseq
-    cdef float gumbel
+    cdef double gumbel
     cdef list seq
     cdef int el
     for element in sampled:
