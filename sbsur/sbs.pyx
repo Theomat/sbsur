@@ -292,19 +292,14 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
 
 def sample(generator: SequenceGenerator, batch_size: int) -> list:
     cdef vector[(vector[int], double)] sampled = c_sample(generator, batch_size)
-    sequences = []
+    cdef list sequences = []
     cdef (vector[int], double) element
-    cdef vector[int] rseq
+    cdef vector[int] seq
     cdef double gumbel
-    cdef list seq
-    cdef int el
     for element in sampled:
-        rseq, gumbel = element
-        seq = []
-        for el in rseq:
-            seq.append(el)
+        seq, gumbel = element
         sequences.append((seq, gumbel))
     # Sort them according to sampling order
     sequences.sort(key=lambda s:s[1], reverse=True)
-    output = [x[0] for x in sequences]
+    cdef list output = [x[0][::-1] for x in sequences]
     return output
