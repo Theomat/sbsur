@@ -8,14 +8,20 @@ from libcpp.vector cimport vector
 from cpython.mem cimport PyMem_Malloc
 from random_wrapper cimport mt19937
 
-from unique_randomizer cimport ur_node_t, ur_free_all, ur_new
+from unique_randomizer cimport ur_node_t, ur_free_all, ur_new, ur_set_logprobs
 
 
 cdef class SequenceGenerator:
 
     def __cinit__(self, python_callback, int max_categories, seed):
-        self.pyfun_get_log_probs = <void*>python_callback
+        self.pyfun_get_log_probs = python_callback
+        if not callable(python_callback):
+            raise TypeError("The first argument must be a callable!")
         self.root = ur_new()
+        cdef int categories = 0
+        cdef vector[int] empty = vector[int]()
+        cdef double* logprobs = self.get_log_probs(empty, &categories)
+        ur_set_logprobs(self.root, logprobs, categories)
         self.max_categories = max_categories
         if seed is None:
             self.generator = mt19937()
@@ -24,17 +30,14 @@ cdef class SequenceGenerator:
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
         cdef int i
-        cdef double* probs
-        cdef object func
+        cdef double* probs = NULL
         cdef list[int] arg = []
         # sequence_prefix is in reversed order
         for i in sequence_prefix:
             arg.append(i)
         try:
-            # recover Python function object from void* argument
-            func = <object>self.pyfun_get_log_probs
             # call function, convert result
-            ret = func(arg)
+            ret = self.pyfun_get_log_probs(arg)
             # If None is returned the ned of the sequence is reached
             if ret is None:
                 categories_ptr[0] = 0
@@ -42,7 +45,7 @@ cdef class SequenceGenerator:
             # Perhaps this could be buffered somewhere?
             # Allocate C memory for it
             probs = <double*> PyMem_Malloc(sizeof(double) * len(ret))
-            if not probs:
+            if probs == NULL:
                 categories_ptr[0] = 0
                 raise MemoryError()
             for i in range(len(ret)):
