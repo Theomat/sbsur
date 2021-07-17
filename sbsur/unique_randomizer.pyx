@@ -121,7 +121,7 @@ cdef void ur_get_log_probs(ur_node_t * node, double* out):
         # Normalize
         psum = log(node.unsampled_fraction)
         for i in range(node.categories):
-            if node.possibles[i] == 0:
+            if node.possibles[i] == 1:
                 node.logprobs[i] = node.original_logprobs[i] - psum
         node.normed = 1
     memcpy(out, node.logprobs, sizeof(double) * node.categories)
@@ -168,7 +168,7 @@ cdef void mark_children_sampled(ur_node_t* parent, int child_index):
         else:
             parent.unsampled_fraction = 0
             for i in range(parent.categories):
-                if parent.possibles[i] == 0:
+                if parent.possibles[i] == 1:
                     parent.unsampled_fraction += exp(parent.logprobs[child_index])
     else:
         parent.unsampled_fraction -= exp(parent.logprobs[child_index])
