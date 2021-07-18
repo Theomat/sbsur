@@ -38,4 +38,4 @@ def test_enumeration(probabilities: np.ndarray):
                 print("failed to sample unique sequence:", np.unique(results).shape[0], "/", SAMPLES)
                 assert False
             results.append(sequence)
-    
+    assert len(results) == SAMPLES
