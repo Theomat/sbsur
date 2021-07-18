@@ -104,10 +104,10 @@ cdef void ur_get_possibles(ur_node_t* node, bool* out):
 
 # A leaf is a node that has yet to be sampled or a terminal e.g. when created a node is a leaf because it doesn't have any children, but it's not a terminal because it hasn't been marked has such
 cdef bool ur_is_leaf(ur_node_t* node):
-    return node.terminal or node.children == NULL
+    return node.terminal == 1 or node.children == NULL
 # A terminal is a node that has no child and will have no child, a terminal node can't be sampled
 cdef bool ur_is_terminal(ur_node_t* node):
-    return node.terminal
+    return node.terminal == 1
 cdef void ur_mark_terminal(ur_node_t* node):
     node.terminal = 1
     exhaust(node)
