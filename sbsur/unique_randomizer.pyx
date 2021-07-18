@@ -111,6 +111,7 @@ cdef bool ur_is_terminal(ur_node_t* node):
 cdef void ur_mark_terminal(ur_node_t* node):
     node.terminal = 1
     exhaust(node)
+    node.unsampled_fraction = 1.0
 cdef bool ur_has_parent(ur_node_t* node):
     return node.parent != NULL
 # Copy the current state of the log probs into out
