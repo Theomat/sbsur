@@ -92,8 +92,8 @@ if __name__ == "__main__":
       {"k": 10, "n": 5, "b": 10},
       {"k": 10, "n": 5, "b": 100},
       {"k": 10, "n": 6, "b": 10},
-      {"k": 20, "n": 5, "b": 10},
-      {"k": 200, "n": 3, "b": 200},
+      {"k": 20, "n": 5, "b": 1000},
+      {"k": 200, "n": 3, "b": 8000},
     ]
     print_line("config", "samples", "time/sample", "SBSUR", "UR")
     for config in configurations:

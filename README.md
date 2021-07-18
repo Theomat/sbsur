@@ -63,11 +63,11 @@ We measure the average time it takes to sample in a given configuration until ex
 
 | Use Case            | Samples    | Time/Sample | SBSUR (us) | [UR](https://github.com/google-research/unique-randomizer) |
 |---------------------|-----------|-------------|------------|----------|
-| `k=10, n=5, b=10`   | 100,000   | 5.670µs     | x1         | x23.0820 |
-| `k=10, n=5, b=100`  | 100,000   | 4.285µs     | x1         | x30.5947 |
-| `k=10, n=6, b=10`   | 1,000,000 | 6.579µs     | x1         | x20.6190
-| `k=20, n=5, b=10`   | 3,200,000 | 8.753µs     | x1         | x17.7002
-| `k=200, n=3, b=200` | 8,000,000 |
+| `k=10, n=5, b=10`   | 100,000   | 5.670µs     | x1         | x23  |
+| `k=10, n=5, b=100`  | 100,000   | 4.285µs     | x1         | x31  |
+| `k=10, n=6, b=10`   | 1,000,000 | 6.579µs     | x1         | x20  |
+| `k=20, n=5, b=1000` | 3,200,000 | 5.598µs     | x1         | x33  |
+| `k=200, n=3, b=8000`| 8,000,000 | 10.058µs    | x1         | x114 |
 
 ### Reproduction
 
