@@ -61,7 +61,7 @@ cdef class SequenceGenerator:
         return self.root
     cdef int get_max_categories(self):
         return self.max_categories
-    cdef mt19937_64 get_generator(self):
-        return self.generator
+    cdef mt19937_64* get_generator(self):
+        return &self.generator
     def __dealloc__(self):
         ur_free_all(self.root)

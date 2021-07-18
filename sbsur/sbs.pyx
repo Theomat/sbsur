@@ -177,7 +177,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     if ur_is_exhausted(root) or batch_size <= 0:
         return out
     cdef uniform_real_distribution[double] dist = uniform_real_distribution[double](0.0,1.0)
-    cdef mt19937_64 gen = generator.get_generator()
+    cdef mt19937_64* gen = generator.get_generator()
 
     # Current state
     cdef vector[ur_node_ptr] internal = vector[ur_node_ptr]()
@@ -237,7 +237,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                 buffer_logprobs[i] += current_log_prob
 
             # Fill buffer_gumbels with the appropriate data
-            sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, &dist, &gen)
+            sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, &dist, gen)
             # Update candidates
             for i in range(nb_children):
                 if possibles[i] == 0 or not should_add_candidate(heap, buffer_gumbels[i], batch_size):
