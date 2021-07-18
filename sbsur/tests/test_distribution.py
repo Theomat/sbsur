@@ -30,9 +30,6 @@ def test_proportions():
     # A state is a pair representing two coin flips. The first flip is biased
     # (60% True). If True, the output is '2'. If False, then the second flip
     # (fair odds) determines whether the output is '0' or '1'.
-    # See unique_randomizer_test.py's test_proportions for a procedural
-    # representation of this logic.
-
     results = []
     for i in range(10000):
       seq_gen = SequenceGenerator(get_logprobs, 2, i)
