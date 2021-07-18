@@ -67,4 +67,6 @@ We measure the average time it takes to sample in a given configuration until ex
 
 ## Multithreading
 
-In Python, multithreading is organised around a Global Interpreter Lock (GIL). In the case of CPU bound tasks such as ours, the GIL is never released. However in Cython one can use the nogil qualifier to express that the GIL is not required, this qualifier add constraints on the development of Cython and this was not done in this project, to use this qualifier, the code should be ported to C++. Instead you can use multiprocessing, each process will have its own GIL so you will benefit from performances improvements. Furthermore, except for the GIL, the code has been designed to not use global locks.
+In Python, multithreading is organised around a Global Interpreter Lock (GIL). In the case of CPU bound tasks such as ours, the GIL is never released. However in Cython one can use the `nogil` qualifier to express that the GIL is not required, this qualifier add constraints on the development. We did not use the `nogil` qualifier in this project, to use this qualifier, the code should be ported to C++ since it entails that Python objects should not be modified. Note that the code can't be made completely GIL-free since we use apython callback.
+
+ Instead you can use `multiprocessing`, each process will have its own GIL so you will benefit from performances improvements. Furthermore, except for the GIL, the code has been designed to not use global locks.
