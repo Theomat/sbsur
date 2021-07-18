@@ -6,7 +6,7 @@
 from libcpp.vector cimport vector
 # Use the cython ones, they are thread-safe and give stats to python memory manager while behaving like C-ones (no GIL)
 from cpython.mem cimport PyMem_Malloc
-from random_wrapper cimport mt19937
+from random_wrapper cimport mt19937_64, random_device
 
 from unique_randomizer cimport ur_node_t, ur_free_all, ur_new, ur_set_logprobs
 
@@ -23,10 +23,11 @@ cdef class SequenceGenerator:
         cdef double* logprobs = self.get_log_probs(empty, &categories)
         ur_set_logprobs(self.root, logprobs, categories)
         self.max_categories = max_categories
+        cdef random_device r
         if seed is None:
-            self.generator = mt19937()
+            self.generator = mt19937_64(r())
         else:
-            self.generator = mt19937(seed)
+            self.generator = mt19937_64(seed)
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
         cdef int i
@@ -60,7 +61,7 @@ cdef class SequenceGenerator:
         return self.root
     cdef int get_max_categories(self):
         return self.max_categories
-    cdef mt19937 get_generator(self):
+    cdef mt19937_64 get_generator(self):
         return self.generator
     def __dealloc__(self):
         ur_free_all(self.root)

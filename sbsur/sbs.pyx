@@ -11,7 +11,7 @@ from unique_randomizer cimport ur_node_t, ur_is_exhausted, ur_get_log_probs, ur_
 # Use the cython ones, they are thread-safe and give stats to python memory manager while behaving like C-ones (no GIL)
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 # Thread safe PRNG (they wrap to C++ standard lib)
-from random_wrapper cimport uniform_real_distribution, mt19937
+from random_wrapper cimport uniform_real_distribution, mt19937_64
 
 # Trick to allow compilation:
 #   cython does not compile vector[ur_node_t*] but it compiles vector[ur_node_t_ptr]
@@ -177,7 +177,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     if ur_is_exhausted(root) or batch_size <= 0:
         return out
     cdef uniform_real_distribution[double] dist = uniform_real_distribution[double](0.0,1.0)
-    cdef mt19937 gen = generator.get_generator()
+    cdef mt19937_64 gen = generator.get_generator()
 
     # Current state
     cdef vector[ur_node_ptr] internal = vector[ur_node_ptr]()
