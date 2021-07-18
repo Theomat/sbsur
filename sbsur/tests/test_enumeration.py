@@ -12,6 +12,7 @@ TESTS: int = 10
 BATCH_SIZE : int = CATEGORIES
 SIZE: int = DEPTH * 5
 SAMPLES: int = int(CATEGORIES**DEPTH)
+np.random.seed(0)
 testdata = [np.random.uniform(size=CATEGORIES*DEPTH) for _ in range(TESTS)]
 
 
