@@ -123,7 +123,10 @@ cdef void ur_get_log_probs(ur_node_t * node, double* out):
         psum = log(node.unsampled_fraction)
         for i in range(node.categories):
             if node.possibles[i] == 1:
-                node.logprobs[i] = node.original_logprobs[i] - psum
+                if node.children == NULL or node.children[i] == NULL:
+                    node.logprobs[i] = node.original_logprobs[i]
+                else:
+                    node.logprobs[i] = log(node.children[i].unsampled_fraction) + node.original_logprobs[i]
         node.normed = 1
     memcpy(out, node.logprobs, sizeof(double) * node.categories)
 
