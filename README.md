@@ -57,13 +57,14 @@ The performance comparison is done on a single thread on a i7-9750H.
 We test the performance on different configurations of sequences with `k` categories of length `n` sampled with a batch size `b`.
 We measure the average time it takes to sample in a given configuration until exhaustion of the sequences.
 
-| Use Case            | SBSUR (us) | [UR](https://github.com/google-research/unique-randomizer) |
-|---------------------|------------|----------|
-| `k=10, n=5, b=10`   | x1         | xY.ZZ    |
-| `k=10, n=5, b=100`  | x1         | xY.ZZ    |
-| `k=10, n=7, b=10`   | x1         | xY.ZZ    |
-| `k=20, n=5, b=10`   | x1         | xY.ZZ    |
-| `k=200, n=3, b=200` | x1         | xY.ZZ    |
+### Reproduction
+
+To reproduce the results of the table above, you will need to have installed both SBSUR and [Unique Randomizer](https://github.com/google-research/unique-randomizer).
+Once installed you can run:
+
+```bash
+python experiments/speed_experiment.py
+```
 
 ## Multithreading
 
