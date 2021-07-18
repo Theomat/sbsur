@@ -151,13 +151,13 @@ cdef void update_with_candidate(GumbelHeap heap, ur_node_t* candidate, double lo
 cdef bool should_add_candidate(GumbelHeap heap, double gumbel, int batch_size):
     return heap.size() < batch_size or heap.min() < gumbel
 
-cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double] dist, mt19937 gen):
+cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double]* dist, mt19937_64 *gen):
     cdef double max_gumbel = -9999999999.0
     cdef int i
     for i in range(nb_children):
         if possibles[i] == 0:
             continue
-        gumbels[i] = logprobs[i] - log(-log(dist(gen)))
+        gumbels[i] = logprobs[i] - log(-log(dist[0](gen[0])))
         if gumbels[i] > max_gumbel:
             max_gumbel = gumbels[i]
     # Use equations (23) and (24) in Appendix B.3 of the SBS paper.
@@ -237,7 +237,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                 buffer_logprobs[i] += current_log_prob
 
             # Fill buffer_gumbels with the appropriate data
-            sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, dist, gen)
+            sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, &dist, &gen)
             # Update candidates
             for i in range(nb_children):
                 if possibles[i] == 0 or not should_add_candidate(heap, buffer_gumbels[i], batch_size):
