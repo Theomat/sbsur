@@ -19,7 +19,7 @@ testdata = [np.random.uniform(size=CATEGORIES*DEPTH) for _ in range(TESTS)]
 def make_logprobs_getter(probs: np.ndarray):
     def get_logprobs(sequence: list[int]) -> Optional[list[float]]:
         if len(sequence) < probs.shape[0]:
-        return np.log(probs[:, len(sequence)])
+            return np.log(probs[:, len(sequence)])
         return None
     return get_logprobs
 
