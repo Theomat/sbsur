@@ -170,7 +170,7 @@ cdef void mark_children_sampled(ur_node_t* parent, int child_index):
             parent.unsampled_fraction = 0
             for i in range(parent.categories):
                 if parent.possibles[i] == 1:
-                    parent.unsampled_fraction += exp(parent.logprobs[child_index])
+                    parent.unsampled_fraction += exp(parent.logprobs[i])
     else:
         parent.unsampled_fraction -= exp(parent.logprobs[child_index])
         parent.logprobs[child_index] = log(child_unsampled) + parent.original_logprobs[child_index]
