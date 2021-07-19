@@ -16,14 +16,17 @@ from sbsur import SequenceGenerator, sample
 
 def get_logprobs(sequence: list[int]) -> Optional[list[float]]:
     if len(sequence) == 0:
+        # From "" => prob of 0: 0.4, 1: 0.6
         return [log(.4), log(.6)]
     if len(sequence) == 1 and sequence[0] == 0:
+        # From "0" => prob of 0: 0.5, 1: 0.5
         return [log(.5), log(.5)]
+    # From "1", "00", "01" => terminal
     return None # indicates that after this sequence prefix there should be no further sampling
 
 max_categories: int = 2 # since at any decision there is at most 2 choices
 seed: int = 0
-# Create a sequence generator, it can used until you exhaust it i.e. you sampled everything
+# Create a sequence generator, it can be used until you exhaust it i.e. you sampled everything
 gen: SequenceGenerator = SequenceGenerator(get_logprobs, max_categories, seed)
 # We sample 2 sequences
 sequence_list: list[list[int]] = sample(gen, 2) 
