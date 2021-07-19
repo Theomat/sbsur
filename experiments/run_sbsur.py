@@ -1,6 +1,5 @@
 from typing import Optional
 import numpy as np
-import torch
 from sbsur import SequenceGenerator, sample
 
 def make_logprobs_getter(probs: np.ndarray):
