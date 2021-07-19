@@ -48,6 +48,11 @@ cdef class GumbelHeap:
         self.size = 0
         self.min = -9999999999.0
 
+    cdef void reserve(self, int size):
+        self.nodes.reserve(size)
+        self.log_probs.reserve(size)
+        self.gumbels.reserve(size)
+
     cdef void push_all(self, vector[ur_node_ptr]* nodes, vector[double]* log_probs, vector[double]* gumbels):
         cdef int i
         # This could be optimized by only percolating up the leaves
@@ -181,12 +186,21 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef vector[ur_node_ptr] internal = vector[ur_node_ptr]()
     cdef vector[double] internal_log_probs = vector[double]()
     cdef vector[double] internal_gumbels = vector[double]()
+    internal.reserve(batch_size)
+    internal_log_probs.reserve(batch_size)
+    internal_gumbels.reserve(batch_size)
+
     # Next expansion state
     cdef GumbelHeap heap = GumbelHeap.__new__(GumbelHeap)
+    heap.reserve(batch_size)
     # Leaves
     cdef vector[ur_node_ptr] leaves = vector[ur_node_ptr]()
     cdef vector[double] leaves_logprobs = vector[double]()
     cdef vector[double] leaves_gumbels = vector[double]()
+    leaves.reserve(batch_size)
+    leaves_logprobs.reserve(batch_size)
+    leaves_gumbels.reserve(batch_size)
+
 
     # Initialisation
     internal.push_back(root)
