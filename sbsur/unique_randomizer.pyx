@@ -99,8 +99,8 @@ cdef int ur_get_categories(ur_node_t *node):
 cdef bool ur_is_exhausted(ur_node_t* node):
     return node.unsampled_fraction <= 0
 # Return an array in which: array[i] == 1 iff the category 'i' can be sampled (this has no link to if there is an actual childe node, we are only interested in the fact that it can be sampled) 
-cdef void ur_get_possibles(ur_node_t* node, bool* out):
-    memcpy(out, node.possibles, sizeof(bool) * node.categories)
+cdef bool* ur_get_possibles(ur_node_t* node):
+    return node.possibles
 
 # A leaf is a node that has yet to be sampled or a terminal e.g. when created a node is a leaf because it doesn't have any children, but it's not a terminal because it hasn't been marked has such
 cdef bool ur_is_leaf(ur_node_t* node):
@@ -115,7 +115,7 @@ cdef void ur_mark_terminal(ur_node_t* node):
 cdef bool ur_has_parent(ur_node_t* node):
     return node.parent != NULL
 # Copy the current state of the log probs into out
-cdef void ur_get_log_probs(ur_node_t * node, double* out):
+cdef double* ur_get_log_probs(ur_node_t * node):
     cdef double psum = 0
     cdef int i = 0
     if node.normed == 0:
@@ -128,7 +128,7 @@ cdef void ur_get_log_probs(ur_node_t * node, double* out):
                 else:
                     node.logprobs[i] = log(node.children[i].unsampled_fraction) + node.original_logprobs[i]
         node.normed = 1
-    memcpy(out, node.logprobs, sizeof(double) * node.categories)
+    return node.logprobs
 
 cdef void exhaust(ur_node_t* node):
     node.unsampled_fraction = 0

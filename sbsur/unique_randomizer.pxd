@@ -39,14 +39,14 @@ cdef int ur_get_categories(ur_node_t *node)
 # Return true => this node can be freed
 cdef bool ur_is_exhausted(ur_node_t* node)
 # Return an array in which: array[i] == true iff the category 'i' can be sampled (this has no link to if there is an actual childe node, we are only interested in the fact that it can be sampled) 
-cdef void ur_get_possibles(ur_node_t* node, bool* out)
+cdef bool* ur_get_possibles(ur_node_t* node)
 # A leaf is a node that has yet to be sampled or a terminal e.g. when created a node is a leaf because it doesn't have any children, but it's not a terminal because it hasn't been marked has such
 cdef bool ur_is_leaf(ur_node_t* node)
 # A terminal is a node that has no child and will have no child, a terminal node can't be sampled
 cdef bool ur_is_terminal(ur_node_t* node)
 cdef bool ur_has_parent(ur_node_t* node)
 # Copy the current state of the log probs into out
-cdef void ur_get_log_probs(ur_node_t * node, double* out)
+cdef double* ur_get_log_probs(ur_node_t * node)
 
 # Update probabilities after seeing sequence stopped at the resulting leaf node
 cdef void ur_mark_sampled(ur_node_t* leaf)

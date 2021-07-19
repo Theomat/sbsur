@@ -143,13 +143,13 @@ cdef class GumbelHeap:
 
 
 
-cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double]* dist, mt19937_64 *gen):
+cdef double sample_gumbels(double translate_logprob, double target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double]* dist, mt19937_64 *gen):
     cdef double max_gumbel = -9999999999.0
     cdef int i
     for i in range(nb_children):
         if possibles[i] == 0:
             continue
-        gumbels[i] = logprobs[i] - log(-log(dist[0](gen[0])))
+        gumbels[i] = logprobs[i] + translate_logprob - log(-log(dist[0](gen[0])))
         if gumbels[i] > max_gumbel:
             max_gumbel = gumbels[i]
     # Use equations (23) and (24) in Appendix B.3 of the SBS paper.
@@ -195,9 +195,9 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef int i
     cdef vector[int] sequence
     # Buffers
-    cdef double* buffer_logprobs = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
+    cdef double* logprobs
+    cdef bool* possibles
     cdef double* buffer_gumbels = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
-    cdef bool* possibles = <bool*> PyMem_Malloc(sizeof(bool) * generator.get_max_categories())
 
     cdef double* new_node_logprobs
     cdef int new_node_categories
@@ -220,16 +220,13 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
             internal_gumbels.pop_back()
             # Get number of children
             nb_children = ur_get_categories(current)
-            # Get the log probs in buffer_logprobs
-            ur_get_log_probs(current, buffer_logprobs)
+            # Get the log probs
+            logprobs = ur_get_log_probs(current)
             # Get possibles
-            ur_get_possibles(current, possibles)
-            # Add current node log prob to children
-            for i in range(nb_children):
-                buffer_logprobs[i] += current_log_prob
+            possibles = ur_get_possibles(current)
 
             # Fill buffer_gumbels with the appropriate data
-            sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, &dist, gen)
+            sample_gumbels(current_log_prob, current_gumbel, nb_children, possibles, logprobs, buffer_gumbels, &dist, gen)
             # Update candidates
             for i in range(nb_children):
                 if possibles[i] == 0 or (heap.size >= batch_size and heap.min >= buffer_gumbels[i]):
@@ -249,10 +246,10 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                 # Add candidate
                 # Not enough internal candidates yet
                 if heap.size < batch_size:
-                    heap.push(ur_get_child(current, i), buffer_logprobs[i], buffer_gumbels[i])
+                    heap.push(ur_get_child(current, i), logprobs[i], buffer_gumbels[i])
                 else:
                     # So we whould discard the min
-                    heap.push_and_discard(ur_get_child(current, i), buffer_logprobs[i], buffer_gumbels[i])
+                    heap.push_and_discard(ur_get_child(current, i), logprobs[i], buffer_gumbels[i])
 
         # Move from heap to leaves and internal
         for _ in range(heap.size):
@@ -271,9 +268,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
         heap.reset()
    
     # Free allocated memory
-    PyMem_Free(buffer_logprobs)
     PyMem_Free(buffer_gumbels)
-    PyMem_Free(possibles)
 
     # Build sampled sequences
     cdef ur_node_t* leaf
