@@ -31,15 +31,16 @@ cdef class GumbelHeap:
     cdef vector[double] log_probs
     cdef vector[double] gumbels
     cdef int index
+    cdef readonly int size
+    cdef readonly double min
 
     def __cinit__(self):
         self.nodes = vector[ur_node_ptr]()
         self.log_probs = vector[double]()
         self.gumbels = vector[double]()
         self.index = 0
-
-    cdef int size(self):
-        return self.nodes.size()
+        self.size = 0
+        self.min = -9999999999.0
 
     cdef void push_all(self, vector[ur_node_ptr]* nodes, vector[double]* log_probs, vector[double]* gumbels):
         cdef int i
@@ -57,6 +58,7 @@ cdef class GumbelHeap:
         self.nodes.push_back(node)
         self.log_probs.push_back(logprob)
         self.gumbels.push_back(gumbel)
+        self.size += 1
         self.__percolate_up__(self.nodes.size() - 1)
 
     cdef void __percolate_down__(self, int index):
@@ -106,6 +108,7 @@ cdef class GumbelHeap:
             self.nodes[i] = node
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
+        self.min = self.gumbels[0]
 
     cdef void __percolate_up__(self, int index):
         cdef int i = index
@@ -121,6 +124,7 @@ cdef class GumbelHeap:
             self.nodes[i] = node
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
+        self.min = self.gumbels[0]
 
     cdef ur_node_t* iterate(self, double* logprob_ptr, double* gumbel_ptr):
         # The [0] is the trick to replace the C * operator
@@ -134,11 +138,9 @@ cdef class GumbelHeap:
         self.nodes.clear()
         self.log_probs.clear()
         self.gumbels.clear()
+        self.size = 0
+        self.min = -9999999999.0
 
-    cdef double min(self):
-        if self.nodes.size() == 0:
-            return -9999999999.0
-        return self.gumbels[0]
 
 cdef void update_with_candidate(GumbelHeap heap, ur_node_t* candidate, double logprob, double gumbel, int batch_size):
     # Not enough internal candidates yet
