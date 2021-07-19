@@ -100,3 +100,11 @@ Once installed you can run:
 In Python, multithreading is organised around a Global Interpreter Lock (GIL). In the case of CPU bound tasks such as ours, the GIL is never released. However in Cython one can use the `nogil` qualifier to express that the GIL is not required, this qualifier add constraints on the development. We did not use the `nogil` qualifier in this project, to use this qualifier, the code should be ported to C++ since it entails that Python objects should not be modified. Note that the code can't be made completely GIL-free since we use a python callback.
 
  Instead you can use `multiprocessing`, each process will have its own GIL so you will benefit from performances improvements. Furthermore, except for the GIL, the code has been designed to not use global locks.
+
+## Possible improvements
+
+- (+ Speed - Memory) Move everything to C++.
+
+- (+ Speed + Memory) Batch the calls to the Python callback `get_logprobs`, this requires a bit of additional memory.
+
+- (- Speed - Memory) Since it is often the case the in `ur_get_logprobs` the log probs are re computed, instead directly compute them in a provided buffer, thus removing the need for the `double* logprobs` array in `ur_node_t`. Though this might cost some speed.
