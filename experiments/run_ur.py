@@ -27,9 +27,9 @@ def makes_ur_functions(probs: np.ndarray):
             new_state = [x for x in state]
             new_state[j] = index
             if j + 1 == probs.shape[1]:
-              results.append((new_state, False))
-            else:
               results.append((new_state, True))
+            else:
+              results.append((new_state, False))
         return results
     return child_log_probability_fn, child_state_fn
 
