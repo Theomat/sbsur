@@ -142,16 +142,6 @@ cdef class GumbelHeap:
         self.min = -9999999999.0
 
 
-cdef void update_with_candidate(GumbelHeap heap, ur_node_t* candidate, double logprob, double gumbel, int batch_size):
-    # Not enough internal candidates yet
-    if heap.size() < batch_size:
-        heap.push(candidate, logprob, gumbel)
-        return
-    # So we whould discard the min
-    heap.push_and_discard(candidate, logprob, gumbel)
-
-cdef bool should_add_candidate(GumbelHeap heap, double gumbel, int batch_size):
-    return heap.size() < batch_size or heap.min() < gumbel
 
 cdef double sample_gumbels(double target_max, int nb_children, bool* possibles, double* logprobs, double* gumbels, uniform_real_distribution[double]* dist, mt19937_64 *gen):
     cdef double max_gumbel = -9999999999.0
@@ -242,7 +232,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
             sample_gumbels(current_gumbel, nb_children, possibles, buffer_logprobs, buffer_gumbels, &dist, gen)
             # Update candidates
             for i in range(nb_children):
-                if possibles[i] == 0 or not should_add_candidate(heap, buffer_gumbels[i], batch_size):
+                if possibles[i] == 0 or (heap.size >= batch_size and heap.min >= buffer_gumbels[i]):
                     continue 
                 
                 # Check if child exists and creates it if it doesn't
@@ -257,10 +247,15 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                     else:
                         ur_expand_node(current, new_node_logprobs, new_node_categories, i)
                 # Add candidate
-                update_with_candidate(heap, ur_get_child(current, i), buffer_logprobs[i], buffer_gumbels[i], batch_size)
+                # Not enough internal candidates yet
+                if heap.size < batch_size:
+                    heap.push(ur_get_child(current, i), buffer_logprobs[i], buffer_gumbels[i])
+                else:
+                    # So we whould discard the min
+                    heap.push_and_discard(ur_get_child(current, i), buffer_logprobs[i], buffer_gumbels[i])
 
         # Move from heap to leaves and internal
-        for _ in range(heap.size()):
+        for _ in range(heap.size):
             # Pop from heap
             current = heap.iterate(&current_log_prob, &current_gumbel)
             if ur_is_terminal(current):
