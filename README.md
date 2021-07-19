@@ -61,13 +61,27 @@ The performance comparison is done on a single thread on a i7-9750H.
 We test the performance on different configurations of sequences with `k` categories of length `n` sampled with a batch size `b`.
 We measure the average time it takes to sample in a given configuration until exhaustion of the sequences.
 
-| Use Case            | Samples    | Time/Sample | SBSUR (us) | [UR](https://github.com/google-research/unique-randomizer) |
-|---------------------|-----------|-------------|------------|----------|
-| `k=10, n=5, b=10`   | 100,000   | 5.670µs     | x1         | x23  |
-| `k=10, n=5, b=100`  | 100,000   | 4.285µs     | x1         | x31  |
-| `k=10, n=6, b=10`   | 1,000,000 | 6.579µs     | x1         | x20  |
-| `k=20, n=5, b=1000` | 3,200,000 | 5.598µs     | x1         | x33  |
-| `k=200, n=3, b=8000`| 8,000,000 | 10.058µs    | x1         | x114 |
+### Speed
+
+| k   | n | b      | Samples   | Time/Sample | SBSUR (us) | [UR](https://github.com/google-research/unique-randomizer) |
+|-----|---|--------|-----------|-------------|------------|------|
+| 10  | 5 | 10     | 100,000   | 10.3µs      | x1         | x31  |
+| 10  | 5 | 100    | 100,000   | 9.2 µs      | x1         | x28  |
+| 10  | 6 | 100    | 1,000,000 | 5.72µs      | x1         | x59  |
+| 20  | 5 | 100    | 3,200,000 | 7.06µs      | x1         | x37  |
+| 200 | 3 | 1,000  | 8,000,000 | 10.2µs      | x1         | x16  |
+| 200 | 3 | 10,000 | 8,000,000 | 10.1µs      | x1         | x16  |
+
+### Memory
+
+| k   | n | b      | Samples   | Max Memory | SBSUR (us) | [UR](https://github.com/google-research/unique-randomizer) |
+|-----|---|--------|-----------|------------|------------|--------|
+| 10  | 5 | 10     | 100,000   | 40MB       | x1         | x2.5   |
+| 10  | 5 | 100    | 100,000   | 40MB       | x1         | x2.5   |
+| 10  | 6 | 100    | 1,000,000 | 86MB       | x1         | x7.3   |
+| 20  | 5 | 100    | 3,200,000 | 181MB      | x1         | x9.8   |
+| 200 | 3 | 1,000  | 8,000,000 | 339MB      | x1         | x11.3  |
+| 200 | 3 | 10,000 | 8,000,000 | 279MB      | x1         | x14.0  |
 
 ### Reproduction
 
@@ -75,7 +89,7 @@ To reproduce the results of the table above, you will need to have installed bot
 Once installed you can run:
 
 ```bash
-python experiments/speed_experiment.py
+./experiments/run_experiment.sh k n b
 ```
 
 ## Multithreading
