@@ -38,19 +38,18 @@ assert len(sequence_list_two) == 1
 
 ## Installation
 
-You can skip the command to install dependencies, they should be installed automatically when installing `sbsur`.
-
 ### For production
 
 ```bash
-pip install cython # install production dependencies
+pip install cython # must be installed first
 pip install git+https://github.com/Theomat/sbsur
 ```
 
 ### For development
 
 ```bash
-pip install cython numpy pytest # install development dependencies
+pip install cython # must be installed first
+pip intall numpy pytest # install development dependencies
 git clone https://github.com/Theomat/sbsur
 pip install -e ./sbsur
 ```

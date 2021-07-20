@@ -1,7 +1,13 @@
 """Installs SBS+UR."""
 import setuptools
-from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+try:
+  from Cython.Build import cythonize
+  from Cython.Distutils import build_ext
+except ImportError:
+  import sys
+  print("You must install Cython before running the setup!", file=sys.stderr)
+  print("You can do so with: pip install cython.", file=sys.stderr)
+  sys.exit(1)
 
 def run_setup():
   """Installs SBSUR."""
