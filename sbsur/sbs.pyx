@@ -17,8 +17,9 @@ from random_wrapper cimport uniform_real_distribution, mt19937_64
 #   cython does not compile vector[ur_node_t*] but it compiles vector[ur_node_t_ptr]
 ctypedef ur_node_t* ur_node_ptr
 
-cdef void build_sequence_buffered(vector[int]* buffer, ur_node_t* leaf):
+cdef void build_sequence_buffered(vector[int]* buffer, ur_node_t* leaf, int end):
     buffer.clear()
+    buffer.push_back(end)
     cdef ur_node_t* current = leaf
     while ur_has_parent(current):
         buffer.push_back(ur_get_index_in_parent(current))
@@ -254,9 +255,8 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                 
                 # Check if child exists and creates it if it doesn't
                 if not ur_is_child_expanded(current, i):
+                    build_sequence_buffered(&sequence, current, i)
                     # Get new logprobs
-                    build_sequence_buffered(&sequence, current)
-                    sequence.push_back(i)
                     new_node_logprobs = generator.get_log_probs(sequence, &new_node_categories)
                     if new_node_categories == 0:
                         # There is no sequence afterwards
