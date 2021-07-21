@@ -31,15 +31,13 @@ cdef class SequenceGenerator:
             self.generator = mt19937_64(seed)
 
     cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
+        # sequence_prefix is in reversed order
         cdef int i
         cdef double* probs = NULL
-        cdef list arg = []
-        # sequence_prefix is in reversed order
-        for i in sequence_prefix:
-            arg.append(i)
+        cdef list arg = sequence_prefix
         try:
             # call function, convert result
-            ret = self.pyfun_get_log_probs(arg)
+            ret = self.pyfun_get_log_probs(arg[::-1])
             # If None is returned the ned of the sequence is reached
             if ret is None:
                 categories_ptr[0] = 0
