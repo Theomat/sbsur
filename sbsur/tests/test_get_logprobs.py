@@ -37,8 +37,8 @@ def test_uniform_trees(probabilities: np.ndarray):
         sample(gen, BATCH_SIZE)
         for seq in l:
             for i, x in enumerate(seq):
-                if not( x >= 0 and x < k[i]):
-                    print("Asked for the probabilitfy of invalid sequence:",seq, "allowed:", k)
+                if not( x >= 0 and x < probabilities.shape[1]):
+                    print("Asked for the probabilitfy of invalid sequence:",seq, "allowed:", probabilities.shape[1])
                     assert False
         l.clear()
 
