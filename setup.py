@@ -32,7 +32,8 @@ def run_setup():
       python_requires='>=3.6',
       ext_modules=cythonize("sbsur/*.pyx"),
       zip_safe=False,
-      cmdclass = {'build_ext':build_ext}
+      cmdclass = {'build_ext':build_ext},
+      extra_compile_args=["-O3"]
   )
 
 
