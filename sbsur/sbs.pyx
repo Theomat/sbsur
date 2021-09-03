@@ -37,6 +37,7 @@ cdef class GumbelHeap:
     cdef vector[ur_node_ptr] nodes
     cdef vector[double] log_probs
     cdef vector[double] gumbels
+    cdef vector[int] child_indices
     cdef int index
     cdef readonly int size
     cdef readonly double min
@@ -45,6 +46,7 @@ cdef class GumbelHeap:
         self.nodes = vector[ur_node_ptr]()
         self.log_probs = vector[double]()
         self.gumbels = vector[double]()
+        self.child_indices = vector[int]()
         self.index = 0
         self.size = 0
         self.min = -9999999999.0
@@ -53,23 +55,27 @@ cdef class GumbelHeap:
         self.nodes.reserve(size)
         self.log_probs.reserve(size)
         self.gumbels.reserve(size)
+        self.child_indices.reserve(size)
 
     cdef void push_all(self, vector[ur_node_ptr]* nodes, vector[double]* log_probs, vector[double]* gumbels):
         cdef int i
         # This could be optimized by only percolating up the leaves
         for i in range(nodes[0].size()):
-            self.push(nodes[0][i], log_probs[0][i], gumbels[0][i])
+            self.push(nodes[0][i], log_probs[0][i], gumbels[0][i], -1)
 
-    cdef void push_and_discard(self, ur_node_t* node, double logprob, double gumbel):
+    cdef void push_and_discard(self, ur_node_t* node, double logprob, double gumbel, int child_index):
         self.nodes[0] = node
         self.log_probs[0] = logprob
         self.gumbels[0] = gumbel
+        self.child_indices[0] = child_index
         self.__percolate_down__(0)
 
-    cdef void push(self, ur_node_t* node, double logprob, double gumbel):
+    cdef void push(self, ur_node_t* node, double logprob, double gumbel, int child_index):
         self.nodes.push_back(node)
         self.log_probs.push_back(logprob)
         self.gumbels.push_back(gumbel)
+        self.child_indices.push_back(child_index)
+
         self.size += 1
         self.__percolate_up__(self.nodes.size() - 1)
 
@@ -79,6 +85,7 @@ cdef class GumbelHeap:
         cdef ur_node_t* node = self.nodes[i]
         cdef double logprob = self.log_probs[i]
         cdef double gumbel = self.gumbels[i]
+        cdef int child_index = self.child_indices[i]
 
         cdef int left = 2 * i + 1
         cdef int right = 2 * i + 2
@@ -91,16 +98,19 @@ cdef class GumbelHeap:
                         self.nodes[i] = self.nodes[right]
                         self.log_probs[i] = self.log_probs[right]
                         self.gumbels[i] = self.gumbels[right]
+                        self.child_indices[i] = self.child_indices[right]
                         i = right
                     else:
                         self.nodes[i] = self.nodes[left]
                         self.log_probs[i] = self.log_probs[left]
                         self.gumbels[i] = self.gumbels[left]
+                        self.child_indices[i] = self.child_indices[left]
                         i = left
                 elif gumbel > self.gumbels[right]:
                     self.nodes[i] = self.nodes[right]
                     self.log_probs[i] = self.log_probs[right]
                     self.gumbels[i] = self.gumbels[right]
+                    self.child_indices[i] = self.child_indices[right]
                     i = right
                 else:
                     break
@@ -109,6 +119,7 @@ cdef class GumbelHeap:
                     self.nodes[i] = self.nodes[left]
                     self.log_probs[i] = self.log_probs[left]
                     self.gumbels[i] = self.gumbels[left]
+                    self.child_indices[i] = self.child_indices[left]
                     i = left
                 else:
                     break
@@ -120,6 +131,7 @@ cdef class GumbelHeap:
             self.nodes[i] = node
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
+            self.child_indices[i] = child_index
         self.min = self.gumbels[0]
 
     cdef void __percolate_up__(self, int index):
@@ -127,21 +139,25 @@ cdef class GumbelHeap:
         cdef ur_node_t* node = self.nodes[i]
         cdef double logprob = self.log_probs[i]
         cdef double gumbel = self.gumbels[i]
+        cdef int child_index = self.child_indices[i]
         while i > 0 and gumbel < self.gumbels[(i - 1) // 2]:
             self.nodes[i] = self.nodes[(i - 1)  // 2]
             self.log_probs[i] = self.log_probs[(i - 1)  // 2]
             self.gumbels[i] = self.gumbels[(i - 1)  // 2]
+            self.child_indices[i] = self.child_indices[(i - 1)  // 2]
             i = (i - 1) // 2 
         if i != index:
             self.nodes[i] = node
             self.log_probs[i] = logprob
             self.gumbels[i] = gumbel
+            self.child_indices[i] = child_index
         self.min = self.gumbels[0]
 
-    cdef ur_node_t* iterate(self, double* logprob_ptr, double* gumbel_ptr):
+    cdef ur_node_t* iterate(self, double* logprob_ptr, double* gumbel_ptr, int* child_index_ptr):
         # The [0] is the trick to replace the C * operator
         logprob_ptr[0] = self.log_probs[self.index]
         gumbel_ptr[0] = self.gumbels[self.index]
+        child_index_ptr[0] = self.child_indices[self.index]
         self.index += 1
         return self.nodes[self.index - 1]
 
@@ -150,6 +166,7 @@ cdef class GumbelHeap:
         self.nodes.clear()
         self.log_probs.clear()
         self.gumbels.clear()
+        self.child_indices.clear()
         self.size = 0
         self.min = -9999999999.0
 
@@ -210,8 +227,10 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
 
     # Loop variables
     cdef ur_node_t* current
+    cdef ur_node_t* child_node
     cdef double current_log_prob
     cdef double current_gumbel 
+    cdef int child_index
     cdef int nb_children
     cdef int i
     cdef vector[int] sequence
@@ -253,28 +272,37 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
                 if possibles[i] == 0 or (heap.size >= batch_size and heap.min >= buffer_gumbels[i]):
                     continue 
                 
-                # Check if child exists and creates it if it doesn't
-                if not ur_is_child_expanded(current, i):
-                    build_sequence_buffered(&sequence, current, i)
-                    # Get new logprobs
-                    new_node_logprobs = generator.get_log_probs(sequence, &new_node_categories)
-                    if new_node_categories == 0:
-                        # There is no sequence afterwards
-                        ur_add_terminal_node(current, i)                    
-                    else:
-                        ur_expand_node(current, new_node_logprobs, new_node_categories, i)
+                # Change data if child exist or not
+                child_index = i
+                child_node = current
+                if ur_is_child_expanded(current, i):
+                    child_index = -1
+                    child_node = ur_get_child(current, i)
                 # Add candidate
                 # Not enough internal candidates yet
                 if heap.size < batch_size:
-                    heap.push(ur_get_child(current, i), logprobs[i], buffer_gumbels[i])
+                    heap.push(child_node, logprobs[i], buffer_gumbels[i], child_index)
                 else:
                     # So we whould discard the min
-                    heap.push_and_discard(ur_get_child(current, i), logprobs[i], buffer_gumbels[i])
-
+                    heap.push_and_discard(child_node, logprobs[i], buffer_gumbels[i], child_index)       
+        
         # Move from heap to leaves and internal
         for _ in range(heap.size):
             # Pop from heap
-            current = heap.iterate(&current_log_prob, &current_gumbel)
+            current = heap.iterate(&current_log_prob, &current_gumbel, &child_index)
+
+            # Expand child if it does not exist
+            if child_index > -1:
+                build_sequence_buffered(&sequence, current, child_index)
+                # Get new logprobs
+                new_node_logprobs = generator.get_log_probs(sequence, &new_node_categories)
+                if new_node_categories == 0:
+                    # There is no sequence afterwards
+                    ur_add_terminal_node(current, child_index)                    
+                else:
+                    ur_expand_node(current, new_node_logprobs, new_node_categories, child_index)
+                current = ur_get_child(current, child_index)
+            # Sort in group for next iteration 
             if ur_is_terminal(current):
                 # Add to leaves
                 leaves.push_back(current)
