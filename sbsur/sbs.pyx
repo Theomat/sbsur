@@ -17,16 +17,17 @@ from random_wrapper cimport uniform_real_distribution, mt19937_64
 #   cython does not compile vector[ur_node_t*] but it compiles vector[ur_node_t_ptr]
 ctypedef ur_node_t* ur_node_ptr
 
-cdef void build_sequence_buffered(vector[int]* buffer, ur_node_t* leaf, int end):
-    buffer.clear()
-    buffer.push_back(end)
-    cdef ur_node_t* current = leaf
-    while ur_has_parent(current):
-        buffer.push_back(ur_get_index_in_parent(current))
-        current = ur_get_parent(current)
-
 cdef vector[int] build_sequence(ur_node_t* leaf):
     cdef vector[int] sequence
+    cdef ur_node_t* current = leaf
+    while ur_has_parent(current):
+        sequence.push_back(ur_get_index_in_parent(current))
+        current = ur_get_parent(current)
+    return sequence
+
+cdef vector[int] build_sequence_with_end(ur_node_t* leaf, int end):
+    cdef vector[int] sequence
+    sequence.push_back(end)
     cdef ur_node_t* current = leaf
     while ur_has_parent(current):
         sequence.push_back(ur_get_index_in_parent(current))
@@ -193,7 +194,7 @@ cdef double sample_gumbels(double translate_logprob, double target_max, int nb_c
             gumbels[i] = target_max - fmax(v, 0.0) - log(1.0 + exp(-fabs(v)))
 
 cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int batch_size):
-    cdef vector[(vector[int], double)] out = [] #vector[(vector[int], float)](batch_size) doesn't work and can't be instancied
+    cdef vector[(vector[int], double)] out
     cdef ur_node_t* root = generator.get_state()
     if ur_is_exhausted(root) or batch_size <= 0:
         return out
@@ -201,9 +202,9 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef mt19937_64* gen = generator.get_generator()
 
     # Current state
-    cdef vector[ur_node_ptr] internal = vector[ur_node_ptr]()
-    cdef vector[double] internal_log_probs = vector[double]()
-    cdef vector[double] internal_gumbels = vector[double]()
+    cdef vector[ur_node_ptr] internal
+    cdef vector[double] internal_log_probs
+    cdef vector[double] internal_gumbels
     internal.reserve(batch_size)
     internal_log_probs.reserve(batch_size)
     internal_gumbels.reserve(batch_size)
@@ -212,13 +213,24 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef GumbelHeap heap = GumbelHeap.__new__(GumbelHeap)
     heap.reserve(batch_size)
     # Leaves
-    cdef vector[ur_node_ptr] leaves = vector[ur_node_ptr]()
-    cdef vector[double] leaves_logprobs = vector[double]()
-    cdef vector[double] leaves_gumbels = vector[double]()
+    cdef vector[ur_node_ptr] leaves
+    cdef vector[double] leaves_logprobs
+    cdef vector[double] leaves_gumbels
     leaves.reserve(batch_size)
     leaves_logprobs.reserve(batch_size)
     leaves_gumbels.reserve(batch_size)
 
+    # Nodes to expand with get_logprobs
+    cdef vector[ur_node_ptr] to_expand_nodes
+    cdef vector[float] to_expand_gumbels
+    cdef vector[float] to_expand_logprob
+    cdef vector[int] to_expand_child_indices
+    cdef vector[vector[int]] sequences
+    to_expand_nodes.reserve(batch_size)
+    to_expand_gumbels.reserve(batch_size)
+    to_expand_logprob.reserve(batch_size)
+    to_expand_child_indices.reserve(batch_size)
+    sequences.reserve(batch_size)
 
     # Initialisation
     internal.push_back(root)
@@ -233,14 +245,15 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
     cdef int child_index
     cdef int nb_children
     cdef int i
-    cdef vector[int] sequence
     # Buffers
     cdef double* logprobs
     cdef bool* possibles
     cdef double* buffer_gumbels = <double*> PyMem_Malloc(sizeof(double) * generator.get_max_categories())
 
-    cdef double* new_node_logprobs
-    cdef int new_node_categories
+    cdef double** new_node_logprobs
+    cdef double* new_node_logprob
+    cdef int* new_node_categories = <int*> PyMem_Malloc(sizeof(int) * batch_size)
+    cdef int new_node_category
 
     while not internal.empty():
         # Add leaves to next_nodes
@@ -249,6 +262,7 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
         leaves.clear()
         leaves_logprobs.clear()
         leaves_gumbels.clear()
+
         # Expand one depth level deeper
         while not internal.empty():
             # Take one internal node
@@ -293,30 +307,66 @@ cdef vector[(vector[int], double)] c_sample(SequenceGenerator generator, int bat
 
             # Expand child if it does not exist
             if child_index > -1:
-                build_sequence_buffered(&sequence, current, child_index)
-                # Get new logprobs
-                new_node_logprobs = generator.get_log_probs(sequence, &new_node_categories)
-                if new_node_categories == 0:
-                    # There is no sequence afterwards
-                    ur_add_terminal_node(current, child_index)                    
-                else:
-                    ur_expand_node(current, new_node_logprobs, new_node_categories, child_index)
-                current = ur_get_child(current, child_index)
-            # Sort in group for next iteration 
-            if ur_is_terminal(current):
-                # Add to leaves
-                leaves.push_back(current)
-                leaves_logprobs.push_back(current_log_prob)
-                leaves_gumbels.push_back(current_gumbel)
+                to_expand_nodes.push_back(current)
+                sequences.push_back(build_sequence_with_end(current, child_index))
+                to_expand_gumbels.push_back(current_gumbel)
+                to_expand_logprob.push_back(current_log_prob)
+                to_expand_child_indices.push_back(child_index)
             else:
-                internal.push_back(current)
-                internal_log_probs.push_back(current_log_prob)
-                internal_gumbels.push_back(current_gumbel)
+                # Sort in group for next iteration 
+                if ur_is_terminal(current):
+                    # Add to leaves
+                    leaves.push_back(current)
+                    leaves_logprobs.push_back(current_log_prob)
+                    leaves_gumbels.push_back(current_gumbel)
+                else:
+                    internal.push_back(current)
+                    internal_log_probs.push_back(current_log_prob)
+                    internal_gumbels.push_back(current_gumbel)
+
+        # Segfault occurs here
+        if sequences.size() > 0:
+            # Get new logprobs
+            new_node_logprobs = generator.get_log_probs(&sequences, new_node_categories)
+            # Expand one depth level deeper all nodes that need to be
+            for i in range(to_expand_nodes.size()):
+   
+                # Get current values
+                current = to_expand_nodes[i]
+                current_log_prob = to_expand_logprob[i]
+                current_gumbel = to_expand_gumbels[i]
+                child_index = to_expand_child_indices[i]
+                new_node_logprob = new_node_logprobs[i]
+                new_node_category = new_node_categories[i]
+
+                if new_node_category == 0:
+                    # There is no sequence afterwards
+                    ur_add_terminal_node(current, child_index) 
+                    current = ur_get_child(current, child_index)
+                    # Add to leaves
+                    leaves.push_back(current)
+                    leaves_logprobs.push_back(current_log_prob)
+                    leaves_gumbels.push_back(current_gumbel)                   
+                else:
+                    ur_expand_node(current, new_node_logprob, new_node_category, child_index)
+
+                    current = ur_get_child(current, child_index)
+                    internal.push_back(current)
+                    internal_log_probs.push_back(current_log_prob)
+                    internal_gumbels.push_back(current_gumbel)
+
+            to_expand_nodes.clear()
+            to_expand_gumbels.clear()
+            to_expand_child_indices.clear()
+            to_expand_logprob.clear()
+            sequences.clear()
+
         # Reset the heap
         heap.reset()
    
     # Free allocated memory
     PyMem_Free(buffer_gumbels)
+    PyMem_Free(new_node_categories)
 
     # Build sampled sequences
     cdef ur_node_t* leaf

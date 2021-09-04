@@ -20,9 +20,9 @@ cdef class SequenceGenerator:
             raise TypeError("The first argument must be a callable!")
         self.root = ur_new()
         cdef int categories = 0
-        cdef vector[int] empty = vector[int]()
-        cdef double* logprobs = self.get_log_probs(empty, &categories)
-        ur_set_logprobs(self.root, logprobs, categories)
+        cdef vector[vector[int]] empty = [[]]
+        cdef double** logprobs = self.get_log_probs(&empty, &categories)
+        ur_set_logprobs(self.root, logprobs[0], categories)
         self.max_categories = max_categories
         cdef random_device r
         if seed is None:
@@ -30,32 +30,32 @@ cdef class SequenceGenerator:
         else:
             self.generator = mt19937_64(seed)
 
-    cdef double* get_log_probs(self, vector[int] sequence_prefix, int* categories_ptr):
+    cdef double** get_log_probs(self, vector[vector[int]]* sequence_prefixes, int* categories_ptr):
         # sequence_prefix is in reversed order
-        cdef int i
+        cdef int prob_index
+        cdef int index
         cdef double* probs = NULL
-        cdef list arg = sequence_prefix
-        try:
-            # call function, convert result
-            ret = self.pyfun_get_log_probs(arg[::-1])
-            # If None is returned the ned of the sequence is reached
-            if ret is None:
-                categories_ptr[0] = 0
-                return NULL
-            # Perhaps this could be buffered somewhere?
+        cdef list arg = sequence_prefixes[0]
+        cdef list logprobs = self.pyfun_get_log_probs([x[::-1] for x in arg])
+        cdef double** output = <double**> PyMem_Malloc(sizeof(double*) * sequence_prefixes.size())
+        for index in range(sequence_prefixes.size()):
+            output[index] = NULL
+            categories_ptr[index] = 0
+            ret = logprobs[index]
+            # If None is returned the end of the sequence is reached
+            if ret is None or len(ret) == 0:
+                continue
             # Allocate C memory for it
             probs = <double*> PyMem_Malloc(sizeof(double) * len(ret))
             if probs == NULL:
-                categories_ptr[0] = 0
                 raise MemoryError()
             for i in range(len(ret)):
                 probs[i] = ret[i]
-            categories_ptr[0] = len(ret)
-            return probs
-        except:
-            # catch any Python errors and return NULL
-            categories_ptr[0] = 0
-            return NULL
+
+            output[index] = probs
+            categories_ptr[index] = len(ret)
+
+        return output
     cdef ur_node_t* get_state(self):
         return self.root
     cdef int get_max_categories(self):
