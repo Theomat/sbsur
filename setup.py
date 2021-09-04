@@ -17,7 +17,7 @@ def run_setup():
 
   setuptools.setup(
       name='sbsur',
-      version="0.1.0",
+      version="0.2.0",
       author='Théo Matricon',
       author_email='theomatricon@gmail.com',
       description='Stochastic Beam Search + UniqueRandomizer: Fast Incremental Sampling Without Replacement',
