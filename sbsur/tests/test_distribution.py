@@ -32,7 +32,7 @@ def test_proportions():
     # (fair odds) determines whether the output is '0' or '1'.
     results = []
     for i in range(10000):
-      seq_gen = SequenceGenerator(get_logprobs, 2, i)
+      seq_gen = SequenceGenerator(lambda x: [get_logprobs(l) for l in x], 2, i)
       seqs = sample(seq_gen, 3)
       results.append(seq2output(seqs))
 

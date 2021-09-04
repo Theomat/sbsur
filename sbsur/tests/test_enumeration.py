@@ -21,7 +21,7 @@ def make_logprobs_getter(probs: np.ndarray):
         if len(sequence) < len(probs):
             return np.log(probs[len(sequence)])
         return None
-    return get_logprobs
+    return lambda x: [get_logprobs(el) for el in x]
 
 @pytest.mark.parametrize("probabilities", testdata)
 def test_uniform_trees(probabilities: np.ndarray):
