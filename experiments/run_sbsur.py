@@ -4,10 +4,10 @@ from sbsur import SequenceGenerator, sample
 
 def make_logprobs_getter(probs: np.ndarray):
     def get_logprobs(sequence: list[int]) -> Optional[list[float]]:
-        if len(sequence) < probs.shape[0]:
+        if len(sequence) < probs.shape[1]:
             return np.log(probs[:, len(sequence)])
         return None
-    return get_logprobs
+    return lambda x: [get_logprobs(el) for el in x]
 
 
 def do_sampling(n: int, k: int, b: int):
