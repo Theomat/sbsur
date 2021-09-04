@@ -27,7 +27,7 @@ def get_logprobs(sequence: list[int]) -> Optional[list[float]]:
 max_categories: int = 2 # since at any decision there is at most 2 choices
 seed: int = 0
 # Create a sequence generator, it can be used until you exhaust it i.e. you sampled everything
-gen: SequenceGenerator = SequenceGenerator(get_logprobs, max_categories, seed)
+gen: SequenceGenerator = SequenceGenerator(lambda sequences: [get_logprobs(seq) for seq in sequences], max_categories, seed)
 # We sample 2 sequences
 sequence_list: list[list[int]] = sample(gen, 2) 
 # We can sample again a batch of 2
@@ -103,7 +103,5 @@ In Python, multithreading is organised around a Global Interpreter Lock (GIL). I
 ## Possible improvements
 
 - (+ Speed - Memory) Move everything to C++.
-
-- (+ Speed + Memory) Batch the calls to the Python callback `get_logprobs`, this requires a bit of additional memory.
 
 - (- Speed - Memory) Since it is often the case the in `ur_get_logprobs` the log probs are re computed, instead directly compute them in a provided buffer, thus removing the need for the `double* logprobs` array in `ur_node_t`. Though this might cost some speed.
