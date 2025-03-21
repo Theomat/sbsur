@@ -18,17 +18,12 @@ def run_setup():
   setuptools.setup(
       name='sbsur',
       version="0.2.0",
-      author='Théo Matricon',
       author_email='theomatricon@gmail.com',
       description='Stochastic Beam Search + UniqueRandomizer: Fast Incremental Sampling Without Replacement',
       long_description=long_description,
       long_description_content_type='text/markdown',
       url='https://github.com/Theomat/sbsur',
       packages=setuptools.find_packages(),
-      install_requires=[
-        'cython'
-      ],
-      extras_require={'dev': ['pytest', 'numpy']},
       python_requires='>=3.6',
       ext_modules=cythonize("sbsur/*.pyx"),
       zip_safe=False,

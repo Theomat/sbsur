@@ -1,8 +1,8 @@
 # distutils: language=c++
 from libcpp.vector cimport vector
 from libcpp cimport bool
-from random_wrapper cimport mt19937_64
-from unique_randomizer cimport ur_node_t
+from sbsur.random_wrapper cimport mt19937_64
+from sbsur.unique_randomizer cimport ur_node_t
 
 
 cdef class SequenceGenerator:

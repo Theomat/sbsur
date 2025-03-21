@@ -1,7 +1,7 @@
 # distutils: language=c++
 from libcpp.vector cimport vector
 
-from sequence_generator cimport SequenceGenerator
+from sbsur.sequence_generator cimport SequenceGenerator
 
 # We hand out a vector (instead of an array) of sequences so that it's automatically freed
 # Note that the sequences that we output are in reversed order

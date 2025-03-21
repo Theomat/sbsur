@@ -1,0 +1,12 @@
+[project]
+name = "sbsur"
+authors = [{ name = "Théo Matricon", email = "theomatricon@gmail.com" }]
+version = "0.2.0"
+description = "Stochastic Beam Search + UniqueRandomizer: Fast Incremental Sampling Without Replacement"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = ["setuptools", "wheel", "Cython"]
+
+
+[build-system]
+requires = ["setuptools", "wheel", "Cython"]

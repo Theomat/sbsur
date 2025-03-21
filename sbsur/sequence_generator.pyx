@@ -7,9 +7,9 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 # Use the cython ones, they are thread-safe and give stats to python memory manager while behaving like C-ones (no GIL)
 from cpython.mem cimport PyMem_Malloc
-from random_wrapper cimport mt19937_64, random_device
+from sbsur.random_wrapper cimport mt19937_64, random_device
 
-from unique_randomizer cimport ur_node_t, ur_free_all, ur_new, ur_set_logprobs, ur_is_exhausted
+from sbsur.unique_randomizer cimport ur_node_t, ur_free_all, ur_new, ur_set_logprobs, ur_is_exhausted
 
 
 cdef class SequenceGenerator:
